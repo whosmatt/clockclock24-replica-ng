@@ -1,5 +1,15 @@
 # ClockClock 24 Replica
-This is my personal implementation of the "ClockClock 24" by [Humans Since 1982](https://www.humanssince1982.com/).
+This is the [Vallasc](https://github.com/Vallasc) personal implementation of the "ClockClock 24" by [Humans Since 1982](https://www.humanssince1982.com/), modified my [whosmatt](https://github.com/whosmatt).  
+Refer to the git history for a detailed list of changes.  
+
+This fork is a general overhaul with some new features:
+- [ ] MQTT
+- [ ] Home Assistant integration and auto-discovery
+- [ ] Networking overhaul (Configurable hostname w/ mDNS, captive portal on AP mode, robust management)
+- [ ] Speed customization
+- [ ] OTA updates
+- [ ] CI/CD for OTA updates
+- [ ] Port to ESP32-C3 (and maybe ESP32-S3)
 
 <div align="center">
 <img width="900"  src="/images/photo1.jpg">
