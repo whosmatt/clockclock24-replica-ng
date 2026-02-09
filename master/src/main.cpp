@@ -53,7 +53,7 @@ void setup() {
   // Load configuration from EEPROM
   begin_config();
 
-  Wire.begin();
+  Wire.begin(8, 10);  // SDA=8, SCL=10
   pinMode(LED_BUILTIN, OUTPUT);
 
   if(get_connection_mode() == HOTSPOT)

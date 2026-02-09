@@ -1,6 +1,6 @@
 #include "web_server.h"
 
-ESP8266WebServer _server(80);
+WebServer _server(80);
 
 t_browser_time _browser_time = {0, 0, 0, 0, 0, 0};
 bool _time_changed_browser = false;

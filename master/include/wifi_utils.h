@@ -2,8 +2,8 @@
 #define WIFI_UTILS_H
 
 #include <Arduino.h>
-#include <ESP8266WiFi.h> 
-#include <ESP8266mDNS.h>
+#include <WiFi.h>
+#include <ESPmDNS.h>
 
 const int max_wifi_retries = 50;
 
@@ -36,8 +36,8 @@ bool wifi_connect(const char *ssid, const char *password, const char *mdns)
     digitalWrite(LED_BUILTIN, LOW);
     return false;
   }
-  if (!MDNS.begin(mdns, WiFi.localIP())) 
-  { // Start the mDNS responder for clockclok24.local
+  if (!MDNS.begin(mdns)) 
+  { // Start the mDNS responder for clockclock24.local
     Serial.println("Error setting up MDNS responder!");
   } 
   else 
@@ -72,7 +72,7 @@ bool wifi_create_AP(const char *ssid, const char *mdns)
   digitalWrite(LED_BUILTIN, HIGH);
   WiFi.softAP(ssid, NULL);
   IPAddress IP = WiFi.softAPIP();
-  if (!MDNS.begin(mdns, IP)) 
+  if (!MDNS.begin(mdns)) 
   { // Start the mDNS responder
     Serial.println("Error setting up MDNS responder!");
   }
@@ -87,11 +87,11 @@ bool wifi_create_AP(const char *ssid, const char *mdns)
 }
 
 /**
- * Update MDNS service
+ * Update MDNS service (not needed on ESP32)
 */
 void update_MDNS()
 {
-  MDNS.update();
+  // No-op on ESP32, but kept for compatibility
 }
 
 /**

@@ -2,7 +2,7 @@
 #define WEB_SERVER_H
 
 #include <Arduino.h>
-#include <ESP8266WebServer.h>
+#include <WebServer.h>
 
 #include "web_page.h"
 #include "clock_manager.h"
