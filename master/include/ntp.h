@@ -2,7 +2,7 @@
 #define NTP_H
 
 #include <WiFiUdp.h>
-#include <ESP8266WiFi.h>
+#include <WiFi.h>
 #include <TimeLib.h>
 
 // NTP Servers:

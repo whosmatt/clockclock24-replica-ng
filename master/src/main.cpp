@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include <TimeLib.h>
 
+#include "board_definitions.h"
 #include "i2c.h"
 #include "clock_state.h"
 #include "clock_manager.h"
@@ -48,12 +49,12 @@ void _delay(int value);
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("\nclockclock24 replica by Vallasc master v1.0");
+  Serial.printf("\nclockclock24 replica by Vallasc - %s\n", BOARD_NAME);
   delay(3000);
   // Load configuration from EEPROM
   begin_config();
 
-  Wire.begin();
+  Wire.begin(I2C_SDA, I2C_SCL);
   pinMode(LED_BUILTIN, OUTPUT);
 
   if(get_connection_mode() == HOTSPOT)
@@ -98,7 +99,6 @@ void loop() {
 
   get_clock_mode() != OFF ? set_time() : stop();
 
-  update_MDNS();
   handle_webclient();
 }
 
@@ -179,7 +179,6 @@ void _delay(int value)
 {
   for (int i = 0; i <value/100; i++)
   {
-    update_MDNS();
     handle_webclient();
     delay(value/100);
   }

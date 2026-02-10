@@ -9,7 +9,7 @@ This fork is a general overhaul with some new features:
 - [ ] Speed customization
 - [ ] OTA updates
 - [ ] CI/CD for OTA updates
-- [ ] Port to ESP32-C3 (and maybe ESP32-S3)
+- [x] Port to ESP32-C3 and ESP32-S3 (LOLIN ESP32-C3 MINI and LOLIN ESP32-S3 MINI can be used as pin-compatible replacements)
 
 <div align="center">
 <img width="900"  src="/images/photo1.jpg">
@@ -71,7 +71,7 @@ Each board has 2 stepper controllers that in total can run 8 motors. As a design
 | 24 | VID28-05 (or BKA30D-R5) 360 degree mod |
 | 16 | AX1201728SG (or VID6606) |
 | 8 | Raspberry pi pico |
-| 1 | ESP8266 MINI |
+| 1 | ESP32 MINI (LOLIN ESP32-C3 MINI or LOLIN ESP32-S3 MINI)|
 | 8 | DIP switch 4 switches |
 | 16 | JST XH 2.54 MALE 4 pins |
 | 14 | JST XH 2.54 FEMALE 4 pins (for connection cables) |
