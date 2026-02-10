@@ -99,7 +99,6 @@ void loop() {
 
   get_clock_mode() != OFF ? set_time() : stop();
 
-  update_MDNS();
   handle_webclient();
 }
 
@@ -180,7 +179,6 @@ void _delay(int value)
 {
   for (int i = 0; i <value/100; i++)
   {
-    update_MDNS();
     handle_webclient();
     delay(value/100);
   }

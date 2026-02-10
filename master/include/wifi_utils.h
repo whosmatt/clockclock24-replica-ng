@@ -87,14 +87,6 @@ bool wifi_create_AP(const char *ssid, const char *mdns)
 }
 
 /**
- * Update MDNS service (not needed on ESP32)
-*/
-void update_MDNS()
-{
-  // No-op on ESP32, but kept for compatibility
-}
-
-/**
  * Check wifi connection
  * @return true if wifi is connected, false otherwise
 */
