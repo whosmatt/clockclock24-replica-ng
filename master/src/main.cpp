@@ -12,6 +12,7 @@
 #include "clock_config.h"
 #include "ntp.h"
 #include "status_led.h"
+#include "captive_portal.h"
 
 int last_hour = -1;
 int last_minute = -1;
@@ -85,6 +86,9 @@ void setup() {
 void loop() {
 
   led_update();
+  
+  if(get_connection_mode() == HOTSPOT)
+    captive_portal_update();
 
   if(get_connection_mode() == HOTSPOT && is_time_changed_browser())
   {
