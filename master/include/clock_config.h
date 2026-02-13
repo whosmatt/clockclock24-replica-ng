@@ -71,6 +71,11 @@ char *get_ssid();
 char *get_password();
 
 /**
+ * Gets current hostname
+ */
+char *get_hostname();
+
+/**
  * Sets clock mode
  * @param value   mode value of type clock_modes
  */
@@ -112,5 +117,11 @@ void set_ssid(const char *value);
  * @param value   password string
  */
 void set_password(const char *value);
+
+/**
+ *  Sets hostname value
+ * @param value   hostname string (defaults to "clockclock24" if empty)
+ */
+void set_hostname(const char *value);
 
 #endif

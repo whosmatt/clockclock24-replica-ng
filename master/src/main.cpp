@@ -58,11 +58,11 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
 
   if(get_connection_mode() == HOTSPOT)
-    wifi_create_AP("ClockClock 24", "clockclock24");
-  else if( !wifi_connect(get_ssid(), get_password(), "clockclock24") )
+    wifi_create_AP("ClockClock 24", get_hostname());
+  else if( !wifi_connect(get_ssid(), get_password(), get_hostname()) )
   {
     set_connection_mode(HOTSPOT);
-    wifi_create_AP("ClockClock 24", "clockclock24");
+    wifi_create_AP("ClockClock 24", get_hostname());
   }
 
   if(get_connection_mode() == EXT_CONN)

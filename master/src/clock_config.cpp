@@ -11,6 +11,7 @@ int _clock_timezone;
 int _wireless_mode;
 char _ssid[64];
 char _password[64];
+char _hostname[64];
 
 void begin_config()
 {
@@ -20,6 +21,7 @@ void begin_config()
   _clock_timezone = prefs.getInt("clock_timezone", 0);
   strncpy(_ssid, prefs.getString("ssid", "").c_str(), sizeof(_ssid));
   strncpy(_password, prefs.getString("password", "").c_str(), sizeof(_password));
+  strncpy(_hostname, prefs.getString("hostname", "clockclock24").c_str(), sizeof(_hostname));
   if(prefs.isKey("sleep_time"))
     prefs.getBytes("sleep_time", _sleep_time, sizeof(_sleep_time));
   else
@@ -38,6 +40,7 @@ void clear_config()
   _wireless_mode = HOTSPOT;
   strncpy(_ssid, "", sizeof(_ssid));
   strncpy(_password, "", sizeof(_password));
+  strncpy(_hostname, "clockclock24", sizeof(_hostname));
   memset(_sleep_time, 0, sizeof(_sleep_time));
 }
 
@@ -69,6 +72,11 @@ char *get_ssid()
 char *get_password()
 {
   return _password;
+}
+
+char *get_hostname()
+{
+  return _hostname;
 }
 
 void set_clock_mode(int value)
@@ -109,4 +117,12 @@ void set_password(const char *value)
 {
   strncpy(_password, value, sizeof(_password));
   prefs.putString("password", value);
+}
+
+void set_hostname(const char *value)
+{
+  // Use default if empty
+  const char *hostname = (value && strlen(value) > 0) ? value : "clockclock24";
+  strncpy(_hostname, hostname, sizeof(_hostname));
+  prefs.putString("hostname", hostname);
 }

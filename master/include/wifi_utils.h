@@ -18,6 +18,7 @@ bool wifi_connect(const char *ssid, const char *password, const char *mdns)
 {
   Serial.printf("\nConnecting to %s\n", ssid);
 
+  WiFi.setHostname(mdns); // Set hostname before mode, see https://github.com/espressif/arduino-esp32/issues/6278
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
@@ -37,7 +38,7 @@ bool wifi_connect(const char *ssid, const char *password, const char *mdns)
     return false;
   }
   if (!MDNS.begin(mdns)) 
-  { // Start the mDNS responder for clockclock24.local
+  { // Start the mDNS responder
     Serial.println("Error setting up MDNS responder!");
   } 
   else 
@@ -45,7 +46,7 @@ bool wifi_connect(const char *ssid, const char *password, const char *mdns)
     MDNS.addService("http", "tcp", 80);
   }
   Serial.println("WiFi connected");
-  Serial.println("mDNS started: http://clockclock24.local");
+  Serial.printf("mDNS started: http://%s.local\n", mdns);
   Serial.println("IP address: " + WiFi.localIP().toString());
   return true;
 }
@@ -70,8 +71,11 @@ bool wifi_create_AP(const char *ssid, const char *mdns)
     digitalWrite(LED_BUILTIN, LOW);
     return false;
   }
-  digitalWrite(LED_BUILTIN, HIGH);
-  WiFi.softAP(ssid, NULL);
+  if (!WiFi.softAP(ssid, NULL))
+  {
+    Serial.println("AP Start Failed");
+    return false;
+  }
   IPAddress IP = WiFi.softAPIP();
   if (!MDNS.begin(mdns)) 
   { // Start the mDNS responder

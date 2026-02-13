@@ -265,6 +265,7 @@
   <div class="btn" style="width:150px" id="con-1" onclick="selectConnection(1)">EXTERNAL</div>
 </div>
 <form id="external" class="hidden" onsubmit="return false;">
+  <input type="text" id="hostname" class="input-text" placeholder="HOSTNAME"/>
   <input type="text" id="ssid" class="input-text" placeholder="SSID" minlength="1" required/>
   <input type="password" id="password" class="input-text" placeholder="PASSWORD" minlength="1" required/>
   <button type="submit" class="btn" style="width:100px" onclick="saveConnection()">SAVE</button>
@@ -297,6 +298,7 @@
   // Wifi credentials
   let ssid = ""
   let password = ""
+  let hostname = ""
 
   /* DOM making */
 
@@ -474,6 +476,7 @@
     selectConnection(res.wireless_mode)
     document.getElementById("ssid").value = ssid = res.ssid
     document.getElementById("password").value = password = res.password
+    document.getElementById("hostname").value = hostname = res.hostname
   }
 
   // Sends an adjust hand request
@@ -528,10 +531,12 @@
   async function saveConnection() {
     ssid = document.getElementById("ssid").value;
     password = document.getElementById("password").value;
+    hostname = document.getElementById("hostname").value;
     let f = new FormData()
     f.append("mode", selectedConnection.toString())
     f.append("ssid", ssid)
     f.append("password", password)
+    f.append("hostname", hostname)
     await fetch("/connection", {
       method: "post",
       body: f,

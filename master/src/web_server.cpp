@@ -61,8 +61,9 @@ void handle_get_config()
       "\"wireless_mode\":%d,"
       "\"ssid\":\"%s\","
       "\"password\":\"%s\","
+      "\"hostname\":\"%s\","
       "\"sleep_time\":%s}",
-      get_clock_mode(), get_connection_mode(), get_ssid(), get_password(), s_time);
+      get_clock_mode(), get_connection_mode(), get_ssid(), get_password(), get_hostname(), s_time);
   }
   _server.send(200, "application/json", payload);
 }
@@ -148,6 +149,8 @@ void handle_post_connection()
     set_ssid(_server.arg("ssid").c_str());
   if (_server.hasArg("password"))
     set_password(_server.arg("password").c_str());
+  if (_server.hasArg("hostname"))
+    set_hostname(_server.arg("hostname").c_str());
   _server.send(200, "text/plain", "");
   end_config();
   ESP.restart();
