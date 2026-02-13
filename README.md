@@ -5,11 +5,12 @@ Refer to the git history for a detailed list of changes.
 This fork is a general overhaul with some new features:
 - [ ] MQTT
 - [ ] Home Assistant integration and auto-discovery
-- [ ] Networking overhaul (Configurable hostname w/ mDNS, captive portal on AP mode, robust management)
+- [x] Networking overhaul (Configurable hostname w/ mDNS, captive portal on AP mode, robust management)
 - [ ] Speed customization
 - [ ] OTA updates
 - [ ] CI/CD for OTA updates
 - [x] Port to ESP32-C3 and ESP32-S3 (LOLIN ESP32-C3 MINI and LOLIN ESP32-S3 MINI can be used as pin-compatible replacements)
+- [x] RGB status LED using onboard addressable LED
 
 <div align="center">
 <img width="900"  src="/images/photo1.jpg">
@@ -48,7 +49,7 @@ After careful research, *VID28-05* (or *BKA30D-R5*) stepper motor was chosen. It
 These motors are low power and can be runned directly by the microcontroller, but in order not to stress the GPIO a dedicated controller was used. Specifically the *AX1201728SG* (equivalent of *X12.017* and *VID6606* chips) offers advantages over running the motor directly such as uses of microstepping. It requires only two GPIO pins per motor, protects the microprocessor from the inductive effects of the motor coils and requires lower current to be runned by the microcontroller.
 
 ### Microcontroller
-Two types of microcontrollers are used: **Raspberry-pi-pico** (RP2040) and **ESP8266**. The main reason for this choice is that ESP8266 has wifi capabilities, the design was made before the release of Raspberry-pi-pico-w, now the PCB could be simplified even more. ESP8266 acts as a master and sends commands to the pico boards that run directly the motors. Raspberry-pi-picoIt was chosen because it has a lot of pins, it is reliable and it is available on the market at a relatively low price.
+Two types of microcontrollers are used: **Raspberry-pi-pico** (RP2040) and **ESP32**. The main reason for this choice is that ESP32 has wifi capabilities, the design was made before the release of Raspberry-pi-pico-w, now the PCB could be simplified even more. ESP32 acts as a master and sends commands to the pico boards that run directly the motors. Raspberry-pi-pico was chosen because it has a lot of pins, it is reliable and it is available on the market at a relatively low price.
 
 ### PCB
 The schematic and all the gerber files are placed in the *./pcb* directory. 
@@ -60,7 +61,7 @@ The schematic and all the gerber files are placed in the *./pcb* directory.
 <div align="center">
 <img width="800"  src="/images/schematic.jpg">
 </div>
-Each board has 2 stepper controllers that in total can run 8 motors. As a design choice, the board has only 3 clocks (6 motors), so 2 outputs are unused. The schematic also contains 6 hall sensors which were to be used to automatically adjust the position of the hands, but in the end they were not added to the final prototype because the magnets were not powerful enough to trigger the sensors. Each board has also housing for ESP8266MINI but it should only be installed on one board (master). This makes it possible to produce only one type of printed circuit board to which components will be soldered according to purpose. Master talks to slaves using I2C protocol, each board is connected to the next in daisy chain. All the boards are powered with 5v and should approximately consume at peak times 1.7 Ah .
+Each board has 2 stepper controllers that in total can run 8 motors. As a design choice, the board has only 3 clocks (6 motors), so 2 outputs are unused. The schematic also contains 6 hall sensors which were to be used to automatically adjust the position of the hands, but in the end they were not added to the final prototype because the magnets were not powerful enough to trigger the sensors. Each board has a ESP32 footprint but it should only be installed on one (any) board (master). This makes it possible to produce only one type of printed circuit board to which components will be soldered according to purpose. Master talks to slaves using I2C protocol, each board is connected to the next in daisy chain. All the boards are powered with 5V and should approximately consume at peak times 1.7A.
 
 #### Bill Of Materials (full clock)
 <div align="center">
@@ -82,7 +83,7 @@ Each board has 2 stepper controllers that in total can run 8 motors. As a design
 ---
 
 ## Software
-On the software side, two different projects were made for master and slave, [PlatformIO](https://platformio.org/)  was used for both of them. The project setup is easy with PlatformIO because it automatically downloads the necessary files. The only parameters you may need to change is *upload_port* and *monitor_port* in *platformio.ini* .
+On the software side, two different projects were made for master and slave, [PlatformIO](https://platformio.org/)  was used for both of them. The project setup is easy with PlatformIO because it automatically downloads the necessary files. 
 
 ### Slave
 The slave code is runned by Raspberry pico, it receives the target hands position through I2C protocol and moves motors accordingly. The I2C address is taken from the position of the 4 switches on the board.
@@ -92,9 +93,9 @@ The code is multicore, one core gets bytes from the I2C bus and saves them in th
 
 
 ### Master
-The master code is runned by ESP8266, it is in charge of sending actual hands position to all the boards and to serve the web application.
+The master code is runned by ESP32, it is in charge of sending actual hands position to all the boards and to serve the web application.
 
-When powered on, it tries to connect to the configured WiFi network, if it fails then makes an open network. Time synchronization is made, if internet connection is available, using NTP service or it is taken from the client browser that visits the web app. When time changes it sends to the corresponding board the new hands position, the way in which these are to be moved (clockwise, counter clockwise, min distance, max distance, etc.), the speed and the acceleration. In the meantime, it responds to the requests made by the web application made available at http://192.168.1.10 or http://clockclock24.local.
+When powered on, it tries to connect to the configured WiFi network, if it fails then makes an open network. Time synchronization is made, if internet connection is available, using NTP service or it is taken from the client browser that visits the web app. When time changes it sends to the corresponding board the new hands position, the way in which these are to be moved (clockwise, counter clockwise, min distance, max distance, etc.), the speed and the acceleration. In the meantime, it responds to the requests made by the web application made available at http://192.168.1.10 (AP mode) or http://clockclock24.local.
 
 * Animation modes available (for now):
     1. **Lazy**, moves only clock hands that need to be changed by traveling the minimum distance.

@@ -1,9 +1,18 @@
 #include "web_server.h"
+#include "clock_config.h"
 
 WebServer _server(80);
 
 t_browser_time _browser_time = {0, 0, 0, 0, 0, 0};
 bool _time_changed_browser = false;
+
+void handle_captive_portal()
+{
+  // Redirect all unknown requests to root (for captive portal)
+  String redirect_url = "http://" + _server.hostHeader() + "/";
+  _server.sendHeader("Location", redirect_url, true);
+  _server.send(302, "text/plain", "");
+}
 
 void server_start()
 {
@@ -17,6 +26,13 @@ void server_start()
   _server.on("/mode", HTTP_POST, handle_post_mode);
   _server.on("/sleep", HTTP_POST, handle_post_sleep);
   _server.on("/connection", HTTP_POST, handle_post_connection);
+
+  // Captive portal: redirect all unknown requests to root when in AP mode
+  if (get_connection_mode() == HOTSPOT)
+  {
+    _server.onNotFound(handle_captive_portal);
+  }
+
   Serial.println("WebServer setup done");
 }
 
@@ -38,7 +54,7 @@ void handle_get()
 
 void handle_get_config()
 {
-  Serial.println("Handle GET /config");\
+  Serial.println("Handle GET /config");
   char payload[1024];
   {
     char s_time[512] = "[";
@@ -48,21 +64,22 @@ void handle_get_config()
       for (int j = 0; j < 24; j++)
       {
         strncat(s_time, get_sleep_time(i, j) ? "1" : "0", 2);
-        if(j < 23)
-          strncat(s_time,"," , sizeof(2));
+        if (j < 23)
+          strncat(s_time, ",", sizeof(2));
       }
       strncat(s_time, "]", sizeof(2));
-      if(i < 6)
-        strncat(s_time,"," , sizeof(2));
+      if (i < 6)
+        strncat(s_time, ",", sizeof(2));
     }
     strncat(s_time, "]", sizeof(2));
-    snprintf(payload, sizeof(payload), 
+    snprintf(payload, sizeof(payload),
       "{\"clock_mode\":%d,"
       "\"wireless_mode\":%d,"
       "\"ssid\":\"%s\","
       "\"password\":\"%s\","
+      "\"hostname\":\"%s\","
       "\"sleep_time\":%s}",
-      get_clock_mode(), get_connection_mode(), get_ssid(), get_password(), s_time);
+      get_clock_mode(), get_connection_mode(), get_ssid(), get_password(), get_hostname(), s_time);
   }
   _server.send(200, "application/json", payload);
 }
@@ -89,8 +106,8 @@ void handle_post_time()
   }
   _time_changed_browser = true;
   _server.send(200, "text/plain", "");
-  Serial.printf("Time received: %d:%d:%d\n", 
-    _browser_time.hour, _browser_time.minute, _browser_time.second);
+  Serial.printf("Time received: %d:%d:%d\n",
+                _browser_time.hour, _browser_time.minute, _browser_time.second);
 }
 
 void handle_post_adjust()
@@ -108,8 +125,8 @@ void handle_post_adjust()
 
   _server.send(200, "text/plain", "");
 
-  Serial.printf("Adjust received, clock: %d, m_amount: %d, h_amount: %d\n", 
-    clock_index, m_amount, h_amount);
+  Serial.printf("Adjust received, clock: %d, m_amount: %d, h_amount: %d\n",
+                clock_index, m_amount, h_amount);
   adjust_hands(clock_index, m_amount, h_amount);
 }
 
@@ -127,7 +144,7 @@ void handle_post_sleep()
   if (_server.hasArg("day"))
   {
     int day = _server.arg("day").toInt();
-    for(int i = 0; i < 24; i++)
+    for (int i = 0; i < 24; i++)
     {
       char arg[8];
       snprintf(arg, sizeof(arg), "h%d", i);
@@ -148,6 +165,8 @@ void handle_post_connection()
     set_ssid(_server.arg("ssid").c_str());
   if (_server.hasArg("password"))
     set_password(_server.arg("password").c_str());
+  if (_server.hasArg("hostname"))
+    set_hostname(_server.arg("hostname").c_str());
   _server.send(200, "text/plain", "");
   end_config();
   ESP.restart();
