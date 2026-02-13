@@ -63,6 +63,7 @@ bool wifi_create_AP(const char *ssid, const char *mdns)
   IPAddress AP_GATEWAY_IP(192, 168, 1, 254);
   IPAddress AP_NETWORK_MASK(255, 255, 255, 0);
   Serial.println("\nCreating access point");
+  WiFi.mode(WIFI_AP);
   if (!WiFi.softAPConfig(AP_LOCAL_IP, AP_GATEWAY_IP, AP_NETWORK_MASK))
   {
     Serial.println("AP Config Failed");
