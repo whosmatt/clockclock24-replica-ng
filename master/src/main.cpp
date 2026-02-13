@@ -11,6 +11,7 @@
 #include "web_server.h"
 #include "clock_config.h"
 #include "ntp.h"
+#include "status_led.h"
 
 int last_hour = -1;
 int last_minute = -1;
@@ -51,11 +52,14 @@ void setup() {
   Serial.begin(115200);
   Serial.printf("\nclockclock24 replica by Vallasc - %s\n", BOARD_NAME);
   delay(3000);
+  
+  // Initialize status LED
+  led_init();
+  
   // Load configuration from EEPROM
   begin_config();
 
   Wire.begin(I2C_SDA, I2C_SCL);
-  pinMode(LED_BUILTIN, OUTPUT);
 
   if(get_connection_mode() == HOTSPOT)
     wifi_create_AP("ClockClock 24", get_hostname());
@@ -79,6 +83,8 @@ void setup() {
 }
 
 void loop() {
+
+  led_update();
 
   if(get_connection_mode() == HOTSPOT && is_time_changed_browser())
   {
