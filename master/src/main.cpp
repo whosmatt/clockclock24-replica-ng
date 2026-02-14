@@ -13,6 +13,7 @@
 #include "ntp.h"
 #include "status_led.h"
 #include "captive_portal.h"
+#include "mqtt_handler.h"
 
 int last_hour = -1;
 int last_minute = -1;
@@ -71,17 +72,21 @@ void setup() {
     wifi_create_AP("ClockClock 24", get_hostname());
   else if( !wifi_connect(get_ssid(), get_password(), get_hostname()) )
   {
-    set_connection_mode(HOTSPOT);
+    // Fall back to hotspot temporarily without changing stored configuration
+    set_active_connection_mode(HOTSPOT);
     wifi_create_AP("ClockClock 24", get_hostname());
   }
 
-  if(get_connection_mode() == EXT_CONN)
+  if(get_active_connection_mode() == EXT_CONN)
   {
     // Initialize NTP
     begin_NTP();
     setSyncProvider(get_NTP_time);
     // Sync every 30 minutes
     setSyncInterval(60 * 30);
+    
+    // Initialize MQTT (only in external connection mode)
+    mqtt_init();
   }
 
   // Starts web server
@@ -92,10 +97,10 @@ void loop() {
 
   led_update();
   
-  if(get_connection_mode() == HOTSPOT)
+  if(get_active_connection_mode() == HOTSPOT)
     captive_portal_update();
 
-  if(get_connection_mode() == HOTSPOT && is_time_changed_browser())
+  if(get_active_connection_mode() == HOTSPOT && is_time_changed_browser())
   {
     t_browser_time browser_time = get_browser_time();
     setTime(browser_time.hour, 
@@ -106,7 +111,7 @@ void loop() {
       browser_time.year);
   }
 
-  if(get_connection_mode() == EXT_CONN && get_timezone() != get_ntp_timezone())
+  if(get_active_connection_mode() == EXT_CONN && get_timezone() != get_ntp_timezone())
   {
     set_ntp_timezone(get_timezone());
     setSyncProvider(get_NTP_time);
@@ -115,6 +120,10 @@ void loop() {
   get_clock_mode() != OFF ? set_time() : stop();
 
   handle_webclient();
+  
+  // Handle MQTT
+  if(get_active_connection_mode() == EXT_CONN)
+    mqtt_handle();
 }
 
 void set_time()

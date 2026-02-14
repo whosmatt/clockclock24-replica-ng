@@ -280,6 +280,21 @@
 </form>
 <div class="spacer"></div>
 <div class="title">
+  MQTT Configuration
+</div>
+<form id="mqtt-form" onsubmit="return false;">
+  <div style="display: flex; align-items: center; margin: 4px;">
+    <input type="checkbox" id="mqtt-enabled" style="width: 20px; height: 20px; margin: 0 8px 0 0; cursor: pointer;"/>
+    <label for="mqtt-enabled" style="cursor: pointer;">Enable MQTT</label>
+  </div>
+  <input type="text" id="mqtt-broker" class="input-text" placeholder="BROKER ADDRESS"/>
+  <input type="number" id="mqtt-port" class="input-text" placeholder="PORT" value="1883" min="1" max="65535"/>
+  <input type="text" id="mqtt-username" class="input-text" placeholder="USERNAME (optional)"/>
+  <input type="password" id="mqtt-password" class="input-text" placeholder="PASSWORD (optional)"/>
+  <button type="submit" class="btn" style="width:100px" onclick="saveMqttConfig()">SAVE</button>
+</form>
+<div class="spacer"></div>
+<div class="title">
   OTA Update
 </div>
 <a href="/update">
@@ -304,6 +319,8 @@
 
   // Current selected animation mode
   let selectedMode = 0
+  // Current clock enabled state
+  let clockEnabled = true
   // Current selected mode
   let selectedClock = undefined
   // Current selected day
@@ -316,6 +333,12 @@
   let ssid = ""
   let password = ""
   let hostname = ""
+  // MQTT configuration
+  let mqttEnabled = false
+  let mqttBroker = ""
+  let mqttPort = 1883
+  let mqttUsername = ""
+  let mqttPassword = ""
 
   /* DOM making */
 
@@ -326,8 +349,8 @@
 
   // Makes modes buttons 
   function genModes() {
-    let modes = ["LAZY", "FUN", "WAVES", "OFF"]
-    let html = ""
+    let modes = ["LAZY", "FUN", "WAVES"]
+    let html = `<div id="clock-enabled" class="btn ${clockEnabled ? "active" : ""}" style="width: 100px; margin-bottom: 16px;" onclick="toggleClockEnabled()">${clockEnabled ? "ON" : "OFF"}</div>`
     let i = 0
     for (let m of modes)
       html += `<div id="mode-${i}" class="btn ${i === selectedMode ? "active" : ""}" onclick="selectMode(${i++})">${m}</div>`
@@ -378,12 +401,21 @@
 
   // Called on buttons clicks to select the mode
   function selectMode(mode) {
-    mode === 3 ? stopClock() : startClock()
     if(selectedMode !== undefined)
       document.getElementById("mode-" + selectedMode).classList.remove("active")
     selectedMode = mode
     document.getElementById("mode-" + selectedMode).classList.add("active")
-    saveMode(selectedMode)
+    saveMode(selectedMode, clockEnabled)
+  }
+
+  // Called when power checkbox is toggled
+  function toggleClockEnabled() {
+    clockEnabled = !clockEnabled
+    const btn = document.getElementById("clock-enabled")
+    btn.textContent = clockEnabled ? "ON" : "OFF"
+    clockEnabled ? btn.classList.add("active") : btn.classList.remove("active")
+    clockEnabled ? startClock() : stopClock()
+    saveMode(selectedMode, clockEnabled)
   }
 
   // Called on buttons clicks to select the day
@@ -489,13 +521,28 @@
     sleep = res.sleep_time
     if(selectedDay !== undefined)
       genHours(selectedDay)
-    selectMode(res.clock_mode)
+    // Update clock mode and enabled state
+    selectedMode = res.clock_mode
+    clockEnabled = res.clock_enabled !== undefined ? res.clock_enabled : true
+    genModes()
+    if (!clockEnabled) {
+      stopClock()
+    }
     selectConnection(res.wireless_mode)
     speedMultiplier = res.speed_multiplier || 1
     document.getElementById("multiplier").value = speedMultiplier
     document.getElementById("ssid").value = ssid = res.ssid
     document.getElementById("password").value = password = res.password
     document.getElementById("hostname").value = hostname = res.hostname
+    // Update MQTT configuration
+    mqttEnabled = res.mqtt_enabled || false
+    mqttBroker = res.mqtt_broker || ""
+    mqttPort = res.mqtt_port || 1883
+    mqttUsername = res.mqtt_username || ""
+    document.getElementById("mqtt-enabled").checked = mqttEnabled
+    document.getElementById("mqtt-broker").value = mqttBroker
+    document.getElementById("mqtt-port").value = mqttPort
+    document.getElementById("mqtt-username").value = mqttUsername
   }
 
   // Sends an adjust hand request
@@ -511,9 +558,10 @@
   }
 
   // Sends a request to save the clock mode
-  function saveMode(mode) {
+  function saveMode(mode, enabled) {
     let f = new FormData()
     f.append("mode", mode.toString())
+    f.append("enabled", enabled ? "1" : "0")
     fetch("/mode", {
       method: "post",
       body: f,
@@ -571,6 +619,26 @@
       body: f,
     })
     setTimeout(() => location.reload(), 2000)
+  }
+
+  // Sends a request to save MQTT configuration
+  async function saveMqttConfig() {
+    mqttEnabled = document.getElementById("mqtt-enabled").checked
+    mqttBroker = document.getElementById("mqtt-broker").value
+    mqttPort = parseInt(document.getElementById("mqtt-port").value)
+    mqttUsername = document.getElementById("mqtt-username").value
+    mqttPassword = document.getElementById("mqtt-password").value
+    let f = new FormData()
+    f.append("enabled", mqttEnabled ? "1" : "0")
+    f.append("broker", mqttBroker)
+    f.append("port", mqttPort.toString())
+    f.append("username", mqttUsername)
+    f.append("password", mqttPassword)
+    await fetch("/mqtt", {
+      method: "post",
+      body: f,
+    })
+    alert("MQTT configuration saved")
   }
 
   // On the first run, updates the datetime on the clock and
@@ -827,7 +895,7 @@
     const time = d.toTimeString().substring(0,5).replace(':', '')
     const day = (d.getDay() + 6) % 7
     const hours = d.getHours()
-    if (time !== lastTime && sleep[day][hours] === 0) {
+    if (time !== lastTime && sleep[day][hours] === 0 && clockEnabled) {
       lastTime = time
       switch(selectedMode) {
         case 0:
@@ -840,7 +908,7 @@
           setWaves(lastTime)
           break;
       }
-    } else if (sleep[day][hours] === 1) {
+    } else if (sleep[day][hours] === 1 || !clockEnabled) {
       setStop()
     }
   }

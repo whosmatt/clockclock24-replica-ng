@@ -3,8 +3,8 @@ This is the [Vallasc](https://github.com/Vallasc) personal implementation of the
 Refer to the git history for a detailed list of changes.  
 
 This fork is a general overhaul with some new features:
-- [ ] MQTT
-- [ ] Home Assistant integration and auto-discovery
+- [x] MQTT
+- [x] Home Assistant integration and auto-discovery
 - [x] Networking overhaul (Configurable hostname w/ mDNS, captive portal on AP mode, robust management)
 - [x] Speed customization
 - [x] OTA updates (ElegantOTA)

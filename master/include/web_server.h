@@ -74,6 +74,11 @@ void handle_post_sleep();
 void handle_post_connection();
 
 /**
+ * Handles POST /mqtt
+*/
+void handle_post_mqtt();
+
+/**
  * Check if the client changed the time
  * @return true if the client makes a request, false otherwise
 */
