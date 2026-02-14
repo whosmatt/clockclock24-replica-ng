@@ -16,4 +16,10 @@ void ota_init(WebServer* server);
  */
 void ota_handle();
 
+/**
+ * Quickly stops the clock (defined in main.cpp) without writing to NVS
+ * Called when OTA update starts
+ */
+extern void shutdown();
+
 #endif

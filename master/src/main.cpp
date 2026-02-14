@@ -44,6 +44,11 @@ void set_waves();
 void stop();
 
 /**
+ * Quickly stops the clock with fixed speed for OTA
+*/
+void shutdown();
+
+/**
  * Custom delay to update web clients
  * @param value   time in milliseconds
 */
@@ -139,35 +144,35 @@ void set_time()
 
 void set_lazy()
 {
-  set_speed(200);
-  set_acceleration(100);
+  set_speed(200 * get_speed_multiplier());
+  set_acceleration(100 * get_speed_multiplier());
   set_direction(MIN_DISTANCE);
   set_clock_time(last_hour, last_minute);
 }
 
 void set_fun()
 {
-  set_speed(400);
-  set_acceleration(150);
+  set_speed(400 * get_speed_multiplier());
+  set_acceleration(150 * get_speed_multiplier());
   set_direction(CLOCKWISE2);
   set_clock_time(last_hour, last_minute);
 }
 
 void set_waves()
 {
-  set_speed(800);
-  set_acceleration(150);
+  set_speed(800 * get_speed_multiplier());
+  set_acceleration(150 * get_speed_multiplier());
   set_direction(MIN_DISTANCE);
   set_clock(d_IIII);
-  _delay(9000);
-  set_speed(400);
-  set_acceleration(100);
+  _delay(9000 / get_speed_multiplier());
+  set_speed(400 * get_speed_multiplier());
+  set_acceleration(100 * get_speed_multiplier());
   set_direction(CLOCKWISE2);
   t_full_clock clock = get_clock_state_from_time(last_hour, last_minute);
   for (int i = 0; i <8; i++)
   {
     set_half_digit(i, clock.digit[i/2].halfs[i%2]);
-    delay(400);
+    _delay(400 / get_speed_multiplier());
   }
 }
 
@@ -179,8 +184,23 @@ void stop()
     last_hour = -1;
     last_minute = -1;
     set_direction(MIN_DISTANCE);
-    set_speed(200);
-    set_acceleration(100);
+    set_speed(200 * get_speed_multiplier());
+    set_acceleration(100 * get_speed_multiplier());
+    set_clock(d_stop);
+  }
+}
+
+void shutdown()
+{
+  set_clock_mode_temp(OFF);
+  if(!is_stopped)
+  {
+    is_stopped = true;
+    last_hour = -1;
+    last_minute = -1;
+    set_direction(MIN_DISTANCE);
+    set_speed(200 * 100);
+    set_acceleration(100 * 100);
     set_clock(d_stop);
   }
 }

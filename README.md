@@ -6,7 +6,7 @@ This fork is a general overhaul with some new features:
 - [ ] MQTT
 - [ ] Home Assistant integration and auto-discovery
 - [x] Networking overhaul (Configurable hostname w/ mDNS, captive portal on AP mode, robust management)
-- [ ] Speed customization
+- [x] Speed customization
 - [x] OTA updates (ElegantOTA)
 - [ ] CI/CD for OTA updates
 - [x] Port to ESP32-C3 and ESP32-S3 (LOLIN ESP32-C3 MINI and LOLIN ESP32-S3 MINI can be used as pin-compatible replacements)

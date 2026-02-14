@@ -76,10 +76,22 @@ char *get_password();
 char *get_hostname();
 
 /**
+ * Gets current speed multiplier
+ * @return speed multiplier (positive integer)
+ */
+int get_speed_multiplier();
+
+/**
  * Sets clock mode
  * @param value   mode value of type clock_modes
  */
 void set_clock_mode(int value);
+
+/**
+ * Sets clock mode temporarily (non-persistent)
+ * @param value   mode value of type clock_modes
+ */
+void set_clock_mode_temp(int value);
 
 /**
  *  Sets current sleep time at a given day and hour
@@ -123,5 +135,11 @@ void set_password(const char *value);
  * @param value   hostname string (defaults to "clockclock24" if empty)
  */
 void set_hostname(const char *value);
+
+/**
+ * Sets speed multiplier
+ * @param value   speed multiplier (positive integer)
+ */
+void set_speed_multiplier(int value);
 
 #endif
