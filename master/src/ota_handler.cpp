@@ -11,6 +11,7 @@ void ota_init(WebServer *server)
     ElegantOTA.onStart([]()
     {
         Serial.println("OTA Update Started");
+        shutdown(); // Add a fast stop command to the queue to restart in calibrated state
         led_set_status(LED_OTA); // Yellow blinking to indicate OTA in progress
     });
 

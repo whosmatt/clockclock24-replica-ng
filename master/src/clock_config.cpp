@@ -93,6 +93,11 @@ void set_clock_mode(int value)
   prefs.putInt("clock_mode", value);
 }
 
+void set_clock_mode_temp(int value)
+{
+  _clock_mode = value;
+}
+
 void set_sleep_time(int day, int hour, bool value)
 {
   _sleep_time[(day * 24) + (hour % 24)] = value;

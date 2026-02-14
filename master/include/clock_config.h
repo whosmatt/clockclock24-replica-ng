@@ -88,6 +88,12 @@ int get_speed_multiplier();
 void set_clock_mode(int value);
 
 /**
+ * Sets clock mode temporarily (non-persistent)
+ * @param value   mode value of type clock_modes
+ */
+void set_clock_mode_temp(int value);
+
+/**
  *  Sets current sleep time at a given day and hour
  * @param day   day of the week
  * @param hour  hour of the day

@@ -44,6 +44,11 @@ void set_waves();
 void stop();
 
 /**
+ * Quickly stops the clock with fixed speed for OTA
+*/
+void shutdown();
+
+/**
  * Custom delay to update web clients
  * @param value   time in milliseconds
 */
@@ -181,6 +186,21 @@ void stop()
     set_direction(MIN_DISTANCE);
     set_speed(200 * get_speed_multiplier());
     set_acceleration(100 * get_speed_multiplier());
+    set_clock(d_stop);
+  }
+}
+
+void shutdown()
+{
+  set_clock_mode_temp(OFF);
+  if(!is_stopped)
+  {
+    is_stopped = true;
+    last_hour = -1;
+    last_minute = -1;
+    set_direction(MIN_DISTANCE);
+    set_speed(200 * 100);
+    set_acceleration(100 * 100);
     set_clock(d_stop);
   }
 }
