@@ -12,6 +12,9 @@ This fork is a general overhaul with some new features:
 - [x] Port to ESP32-C3 and ESP32-S3 (LOLIN ESP32-C3 MINI and LOLIN ESP32-S3 MINI can be used as pin-compatible replacements)
 - [x] RGB status LED using onboard addressable LED
 
+## DO NOT USE LOLIN ESP32-C3 MINI
+The software works fine, but some combination of trace lengths and pin capacitance causes the WiFi to be very unstable with the LOLIN ESP32-C3 MINI while it is plugged into the PCB. Using wires or stacking the another pair of pin headers seems to make it work fine, but with the normal assembly the WiFi is unusable. **The LOLIN ESP32-S3 MINI does not have this issue, so it is recommended to use that one instead.**
+
 <div align="center">
 <img width="900"  src="/images/photo1.jpg">
 </div>
