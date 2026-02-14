@@ -13,7 +13,8 @@ enum led_status
   LED_CONNECTING,       // Connecting to WiFi (blinking blue)
   LED_CONNECTED,        // Connected successfully (green)
   LED_AP_MODE,          // Access Point mode (cyan)
-  LED_ERROR            // Error state (red)
+  LED_OTA,              // OTA update in progress (blinking yellow)
+  LED_ERROR             // Error state (red)
 };
 
 /**

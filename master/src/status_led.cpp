@@ -39,12 +39,16 @@ void led_set_status(led_status status)
         strip.setPixelColor(0, strip.Color(0, 255, 255)); // Cyan
         break;
 
+    case LED_OTA:
+        // Will blink in led_update()
+        break;
+
     case LED_ERROR:
         strip.setPixelColor(0, strip.Color(255, 0, 0)); // Red
         break;
     }
 
-    if (status != LED_CONNECTING)
+    if (status != LED_CONNECTING && status != LED_OTA)
     {
         strip.show();
     }
@@ -59,8 +63,8 @@ void led_off()
 
 void led_update()
 {
-    // Handle blinking for CONNECTING state
-    if (current_status == LED_CONNECTING)
+    // Handle blinking for CONNECTING and OTA states
+    if (current_status == LED_CONNECTING || current_status == LED_OTA)
     {
         unsigned long now = millis();
         if (now - last_blink >= 400)
@@ -69,7 +73,12 @@ void led_update()
             blink_state = !blink_state;
 
             if (blink_state)
-                strip.setPixelColor(0, strip.Color(0, 0, 255)); // Blue
+            {
+                if (current_status == LED_CONNECTING)
+                    strip.setPixelColor(0, strip.Color(0, 0, 255)); // Blue for WiFi
+                else if (current_status == LED_OTA)
+                    strip.setPixelColor(0, strip.Color(255, 255, 0)); // Yellow for OTA
+            }
             else
                 strip.setPixelColor(0, strip.Color(0, 0, 0)); // Off
 

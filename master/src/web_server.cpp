@@ -1,5 +1,6 @@
 #include "web_server.h"
 #include "clock_config.h"
+#include "ota_handler.h"
 
 WebServer _server(80);
 
@@ -32,6 +33,9 @@ void server_start()
   {
     _server.onNotFound(handle_captive_portal);
   }
+  
+  // Initialize OTA update handler
+  ota_init(&_server);
 
   Serial.println("WebServer setup done");
 }
@@ -39,6 +43,7 @@ void server_start()
 void handle_webclient()
 {
   _server.handleClient();
+  ota_handle();
 }
 
 void server_stop()
