@@ -32,7 +32,7 @@ void server_start()
   _server.on("/mqtt", HTTP_POST, handle_post_mqtt);
 
   // Captive portal: redirect all unknown requests to root when in AP mode
-  if (get_connection_mode() == HOTSPOT)
+  if (get_active_connection_mode() == HOTSPOT)
   {
     _server.onNotFound(handle_captive_portal);
   }
@@ -219,7 +219,7 @@ void handle_post_mqtt()
   _server.send(200, "text/plain", "");
   
   // Reinitialize MQTT with new settings
-  if (get_connection_mode() == EXT_CONN) {
+  if (get_active_connection_mode() == EXT_CONN) {
     mqtt_init();
   }
 }

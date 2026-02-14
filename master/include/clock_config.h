@@ -68,6 +68,11 @@ bool get_sleep_time(int day, int hour);
 int get_connection_mode();
 
 /**
+ * Gets active (runtime) connection mode
+ */
+int get_active_connection_mode();
+
+/**
  * Gets current time zone based on UTC offset
  */
 int get_timezone();
@@ -160,6 +165,12 @@ void save_sleep_time();
  * @param value   mode value of type wireless_modes
  */
 void set_connection_mode(int value);
+
+/**
+ * Sets active connection mode (runtime only, not saved)
+ * @param value  new active connection mode
+ */
+void set_active_connection_mode(int value);
 
 /**
  *  Sets the time zone

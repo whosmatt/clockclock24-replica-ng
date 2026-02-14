@@ -72,11 +72,12 @@ void setup() {
     wifi_create_AP("ClockClock 24", get_hostname());
   else if( !wifi_connect(get_ssid(), get_password(), get_hostname()) )
   {
-    set_connection_mode(HOTSPOT);
+    // Fall back to hotspot temporarily without changing stored configuration
+    set_active_connection_mode(HOTSPOT);
     wifi_create_AP("ClockClock 24", get_hostname());
   }
 
-  if(get_connection_mode() == EXT_CONN)
+  if(get_active_connection_mode() == EXT_CONN)
   {
     // Initialize NTP
     begin_NTP();
@@ -96,10 +97,10 @@ void loop() {
 
   led_update();
   
-  if(get_connection_mode() == HOTSPOT)
+  if(get_active_connection_mode() == HOTSPOT)
     captive_portal_update();
 
-  if(get_connection_mode() == HOTSPOT && is_time_changed_browser())
+  if(get_active_connection_mode() == HOTSPOT && is_time_changed_browser())
   {
     t_browser_time browser_time = get_browser_time();
     setTime(browser_time.hour, 
@@ -110,7 +111,7 @@ void loop() {
       browser_time.year);
   }
 
-  if(get_connection_mode() == EXT_CONN && get_timezone() != get_ntp_timezone())
+  if(get_active_connection_mode() == EXT_CONN && get_timezone() != get_ntp_timezone())
   {
     set_ntp_timezone(get_timezone());
     setSyncProvider(get_NTP_time);
@@ -121,7 +122,7 @@ void loop() {
   handle_webclient();
   
   // Handle MQTT
-  if(get_connection_mode() == EXT_CONN)
+  if(get_active_connection_mode() == EXT_CONN)
     mqtt_handle();
 }
 

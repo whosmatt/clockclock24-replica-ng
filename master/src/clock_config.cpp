@@ -11,6 +11,7 @@ int _clock_timezone;
 int _speed_multiplier = 1;
 
 int _wireless_mode;
+int _active_wireless_mode; // Runtime connection mode (may differ from configured mode)
 char _ssid[64];
 char _password[64];
 char _hostname[64];
@@ -28,6 +29,7 @@ void begin_config()
   _clock_mode = prefs.getInt("clock_mode", LAZY);
   _clock_enabled = prefs.getBool("clock_enabled", true);
   _wireless_mode = prefs.getInt("wireless_mode", HOTSPOT);
+  _active_wireless_mode = _wireless_mode;
   _clock_timezone = prefs.getInt("clock_timezone", 0);
   _speed_multiplier = prefs.getInt("speed_mult", 1);
   strncpy(_ssid, prefs.getString("ssid", "").c_str(), sizeof(_ssid));
@@ -91,6 +93,11 @@ bool get_sleep_time(int day, int hour)
 int get_connection_mode()
 {
   return _wireless_mode;
+}
+
+int get_active_connection_mode()
+{
+  return _active_wireless_mode;
 }
 
 int get_timezone()
@@ -195,7 +202,13 @@ void save_sleep_time()
 void set_connection_mode(int value)
 {
   _wireless_mode = value;
+  _active_wireless_mode = value;
   prefs.putInt("wireless_mode", value);
+}
+
+void set_active_connection_mode(int value)
+{
+  _active_wireless_mode = value;
 }
 
 void set_timezone(int value)
