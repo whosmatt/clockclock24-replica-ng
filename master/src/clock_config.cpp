@@ -20,7 +20,7 @@ void begin_config()
   _clock_mode = prefs.getInt("clock_mode", LAZY);
   _wireless_mode = prefs.getInt("wireless_mode", HOTSPOT);
   _clock_timezone = prefs.getInt("clock_timezone", 0);
-  _speed_multiplier = prefs.getInt("speed_multiplier", 1);
+  _speed_multiplier = prefs.getInt("speed_mult", 1);
   strncpy(_ssid, prefs.getString("ssid", "").c_str(), sizeof(_ssid));
   strncpy(_password, prefs.getString("password", "").c_str(), sizeof(_password));
   strncpy(_hostname, prefs.getString("hostname", "clockclock24").c_str(), sizeof(_hostname));
@@ -145,6 +145,6 @@ void set_speed_multiplier(int value)
   if(value >= 1)
   {
     _speed_multiplier = value;
-    prefs.putInt("speed_multiplier", value);
+    prefs.putInt("speed_mult", value);
   }
 }
