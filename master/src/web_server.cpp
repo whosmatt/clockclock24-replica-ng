@@ -25,6 +25,7 @@ void server_start()
   _server.on("/time", HTTP_POST, handle_post_time);
   _server.on("/adjust", HTTP_POST, handle_post_adjust);
   _server.on("/mode", HTTP_POST, handle_post_mode);
+  _server.on("/settings", HTTP_POST, handle_post_settings);
   _server.on("/sleep", HTTP_POST, handle_post_sleep);
   _server.on("/connection", HTTP_POST, handle_post_connection);
 
@@ -83,8 +84,9 @@ void handle_get_config()
       "\"ssid\":\"%s\","
       "\"password\":\"%s\","
       "\"hostname\":\"%s\","
+      "\"speed_multiplier\":%d,"
       "\"sleep_time\":%s}",
-      get_clock_mode(), get_connection_mode(), get_ssid(), get_password(), get_hostname(), s_time);
+      get_clock_mode(), get_connection_mode(), get_ssid(), get_password(), get_hostname(), get_speed_multiplier(), s_time);
   }
   _server.send(200, "application/json", payload);
 }
@@ -140,6 +142,14 @@ void handle_post_mode()
   Serial.println("Handle POST /mode");
   if (_server.hasArg("mode"))
     set_clock_mode(_server.arg("mode").toInt());
+  _server.send(200, "text/plain", "");
+}
+
+void handle_post_settings()
+{
+  Serial.println("Handle POST /settings");
+  if (_server.hasArg("multiplier"))
+    set_speed_multiplier(_server.arg("multiplier").toInt());
   _server.send(200, "text/plain", "");
 }
 

@@ -252,6 +252,14 @@
 <div id="modes"></div>
 <div class="spacer"></div>
 <div class="title">
+  Speed Multiplier
+</div>
+<div>
+  <input type="number" id="multiplier" style="width:100px" class="input-text" min="1"/>
+  <button class="btn" style="width:100px" onclick="saveClockSettings()">SAVE</button>
+</div>
+<div class="spacer"></div>
+<div class="title">
   Sleep Time
 </div>
 <div id="days"></div>
@@ -302,6 +310,8 @@
   let selectedDay = undefined
   // Current selected connection mode
   let selectedConnection = undefined
+  // Clock settings multiplier
+  let speedMultiplier = 1
   // Wifi credentials
   let ssid = ""
   let password = ""
@@ -481,6 +491,8 @@
       genHours(selectedDay)
     selectMode(res.clock_mode)
     selectConnection(res.wireless_mode)
+    speedMultiplier = res.speed_multiplier || 1
+    document.getElementById("multiplier").value = speedMultiplier
     document.getElementById("ssid").value = ssid = res.ssid
     document.getElementById("password").value = password = res.password
     document.getElementById("hostname").value = hostname = res.hostname
@@ -508,6 +520,16 @@
     })
   }
 
+  // Sends a request to save the clock settings
+  function saveClockSettings() {
+    speedMultiplier = parseInt(document.getElementById("multiplier").value)
+    let f = new FormData()
+    f.append("multiplier", speedMultiplier.toString())
+    fetch("/settings", {
+      method: "post",
+      body: f,
+    })
+  }
 
   // Last modified sleep day
   // Used to delay and aggregate request in order not to
