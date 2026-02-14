@@ -787,34 +787,35 @@
   // Sets stop position
   function setStop() {
     for (let i = 0; i < 4; i++)
-      setDigit(i, digit_stop, 6, 15)
+      setDigit(i, digit_stop, 6, 15 / Math.pow(speedMultiplier, 0.7))
   }
 
   // Sets time with lazy animation
   function setLazy(time) {
     for (let i = 0; i < 4; i++)
-      setDigit(i, digits[time.charAt(i)], 6, 15)
+      setDigit(i, digits[time.charAt(i)], 6, 15 / Math.pow(speedMultiplier, 0.7))
   }
 
   // Sets time with fun animation
   function setFun(time) {
     for (let i = 0; i < 4; i++)
-      setDigit(i, digits[time.charAt(i)], 1, 16)
+      setDigit(i, digits[time.charAt(i)], 1, 16 / Math.pow(speedMultiplier, 0.7))
   }
 
   // Sets time with waves animation
   function setWaves(time) {
+    const scaleFactor = Math.pow(speedMultiplier, 0.7)
     for (let i = 0; i < 4; i++)
-      setDigit(i, digit_II, 6, 8)
+      setDigit(i, digit_II, 6, 8 / scaleFactor)
     for (let i = 0; i < 8; i++)
       setTimeout(()=>{
-        setHalfDigit(i, digit_II, 1, 18)
-      }, 7000 + 400 * (i + 1))
+        setHalfDigit(i, digit_II, 1, 18 / scaleFactor)
+      }, (7000 + 400 * (i + 1)) / scaleFactor)
 
     for (let i = 0; i < 4; i++)
       setTimeout(()=>{
-        setDigit(i, digits[time.charAt(i)], 0, 15)
-      }, 7000 + 9000 + 400 *(i*2 + 1))
+        setDigit(i, digits[time.charAt(i)], 0, 15 / scaleFactor)
+      }, (7000 + 9000 + 400 *(i*2 + 1)) / scaleFactor)
   }
 
   // Last time setted on clock
@@ -858,7 +859,7 @@
   function stopClock() {
     clearInterval(clockInterval)
     clockInterval = undefined
-    setTimeout(setStop, 100)
+    setTimeout(setStop, 100 / Math.pow(speedMultiplier, 0.7))
   }
 
   let lastClockInterval = undefined
