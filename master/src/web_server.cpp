@@ -1,6 +1,7 @@
 #include "web_server.h"
 #include "clock_config.h"
 #include "ota_handler.h"
+#include "mqtt_handler.h"
 
 WebServer _server(80);
 
@@ -28,6 +29,7 @@ void server_start()
   _server.on("/settings", HTTP_POST, handle_post_settings);
   _server.on("/sleep", HTTP_POST, handle_post_sleep);
   _server.on("/connection", HTTP_POST, handle_post_connection);
+  _server.on("/mqtt", HTTP_POST, handle_post_mqtt);
 
   // Captive portal: redirect all unknown requests to root when in AP mode
   if (get_connection_mode() == HOTSPOT)
@@ -80,13 +82,22 @@ void handle_get_config()
     strncat(s_time, "]", sizeof(2));
     snprintf(payload, sizeof(payload),
       "{\"clock_mode\":%d,"
+      "\"clock_enabled\":%s,"
       "\"wireless_mode\":%d,"
       "\"ssid\":\"%s\","
       "\"password\":\"%s\","
       "\"hostname\":\"%s\","
       "\"speed_multiplier\":%d,"
+      "\"mqtt_enabled\":%s,"
+      "\"mqtt_broker\":\"%s\","
+      "\"mqtt_port\":%d,"
+      "\"mqtt_username\":\"%s\","
       "\"sleep_time\":%s}",
-      get_clock_mode(), get_connection_mode(), get_ssid(), get_password(), get_hostname(), get_speed_multiplier(), s_time);
+      get_clock_animation_mode(), get_clock_enabled() ? "true" : "false", 
+      get_connection_mode(), get_ssid(), get_password(), get_hostname(), 
+      get_speed_multiplier(), 
+      get_mqtt_enabled() ? "true" : "false", get_mqtt_broker(), 
+      get_mqtt_port(), get_mqtt_username(), s_time);
   }
   _server.send(200, "application/json", payload);
 }
@@ -142,7 +153,12 @@ void handle_post_mode()
   Serial.println("Handle POST /mode");
   if (_server.hasArg("mode"))
     set_clock_mode(_server.arg("mode").toInt());
+  if (_server.hasArg("enabled"))
+    set_clock_enabled(_server.arg("enabled").toInt() != 0);
   _server.send(200, "text/plain", "");
+  
+  // Publish state change to MQTT if enabled
+  mqtt_publish_state();
 }
 
 void handle_post_settings()
@@ -185,6 +201,27 @@ void handle_post_connection()
   _server.send(200, "text/plain", "");
   end_config();
   ESP.restart();
+}
+
+void handle_post_mqtt()
+{
+  Serial.println("Handle POST /mqtt");
+  if (_server.hasArg("enabled"))
+    set_mqtt_enabled(_server.arg("enabled").toInt() != 0);
+  if (_server.hasArg("broker"))
+    set_mqtt_broker(_server.arg("broker").c_str());
+  if (_server.hasArg("port"))
+    set_mqtt_port(_server.arg("port").toInt());
+  if (_server.hasArg("username"))
+    set_mqtt_username(_server.arg("username").c_str());
+  if (_server.hasArg("password"))
+    set_mqtt_password(_server.arg("password").c_str());
+  _server.send(200, "text/plain", "");
+  
+  // Reinitialize MQTT with new settings
+  if (get_connection_mode() == EXT_CONN) {
+    mqtt_init();
+  }
 }
 
 bool is_time_changed_browser()

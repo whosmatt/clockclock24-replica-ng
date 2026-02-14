@@ -13,6 +13,7 @@
 #include "ntp.h"
 #include "status_led.h"
 #include "captive_portal.h"
+#include "mqtt_handler.h"
 
 int last_hour = -1;
 int last_minute = -1;
@@ -82,6 +83,9 @@ void setup() {
     setSyncProvider(get_NTP_time);
     // Sync every 30 minutes
     setSyncInterval(60 * 30);
+    
+    // Initialize MQTT (only in external connection mode)
+    mqtt_init();
   }
 
   // Starts web server
@@ -115,6 +119,10 @@ void loop() {
   get_clock_mode() != OFF ? set_time() : stop();
 
   handle_webclient();
+  
+  // Handle MQTT
+  if(get_connection_mode() == EXT_CONN)
+    mqtt_handle();
 }
 
 void set_time()

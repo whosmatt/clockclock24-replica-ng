@@ -19,9 +19,11 @@ enum clock_modes
 {
   LAZY,
   FUN,
-  WAVES,
-  OFF
+  WAVES
 };
+
+// Virtual mode for backward compatibility
+#define OFF 255
 
 /**
  * Load configuration from the EEPROM
@@ -39,9 +41,19 @@ void clear_config();
 void end_config();
 
 /**
- * Get current clock mode
+ * Get current clock mode (returns OFF if clock is disabled)
  */
 int get_clock_mode();
+
+/**
+ * Get current clock animation mode (ignores power state)
+ */
+int get_clock_animation_mode();
+
+/**
+ * Get clock enabled state
+ */
+bool get_clock_enabled();
 
 /**
  * Gets current sleep time at a given day and hour
@@ -76,6 +88,31 @@ char *get_password();
 char *get_hostname();
 
 /**
+ * Gets MQTT broker address
+ */
+char *get_mqtt_broker();
+
+/**
+ * Gets MQTT broker port
+ */
+int get_mqtt_port();
+
+/**
+ * Gets MQTT username
+ */
+char *get_mqtt_username();
+
+/**
+ * Gets MQTT password
+ */
+char *get_mqtt_password();
+
+/**
+ * Gets MQTT enabled state
+ */
+bool get_mqtt_enabled();
+
+/**
  * Gets current speed multiplier
  * @return speed multiplier (positive integer)
  */
@@ -83,15 +120,27 @@ int get_speed_multiplier();
 
 /**
  * Sets clock mode
- * @param value   mode value of type clock_modes
+ * @param value   mode value of type clock_modes or OFF
  */
 void set_clock_mode(int value);
 
 /**
  * Sets clock mode temporarily (non-persistent)
- * @param value   mode value of type clock_modes
+ * @param value   mode value of type clock_modes or OFF
  */
 void set_clock_mode_temp(int value);
+
+/**
+ * Sets clock animation mode (0-2: LAZY, FUN, WAVES)
+ * @param value   mode value of type clock_modes
+ */
+void set_clock_animation_mode(int value);
+
+/**
+ * Sets clock enabled state
+ * @param value   true to enable, false to disable
+ */
+void set_clock_enabled(bool value);
 
 /**
  *  Sets current sleep time at a given day and hour
@@ -135,6 +184,36 @@ void set_password(const char *value);
  * @param value   hostname string (defaults to "clockclock24" if empty)
  */
 void set_hostname(const char *value);
+
+/**
+ *  Sets MQTT broker address
+ * @param value   broker IP or hostname
+ */
+void set_mqtt_broker(const char *value);
+
+/**
+ *  Sets MQTT broker port
+ * @param value   broker port (default 1883)
+ */
+void set_mqtt_port(int value);
+
+/**
+ *  Sets MQTT username
+ * @param value   MQTT username
+ */
+void set_mqtt_username(const char *value);
+
+/**
+ *  Sets MQTT password
+ * @param value   MQTT password
+ */
+void set_mqtt_password(const char *value);
+
+/**
+ *  Sets MQTT enabled state
+ * @param value   true to enable MQTT, false to disable
+ */
+void set_mqtt_enabled(bool value);
 
 /**
  * Sets speed multiplier
