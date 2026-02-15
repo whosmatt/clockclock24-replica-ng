@@ -173,7 +173,7 @@ void set_waves()
   set_acceleration(150 * get_speed_multiplier());
   set_direction(MIN_DISTANCE);
   set_clock(d_IIII);
-  _delay(9000 / get_speed_multiplier());
+  _delay(4000 +(9000 - 4000) / sqrt(get_speed_multiplier()));
   set_speed(400 * get_speed_multiplier());
   set_acceleration(100 * get_speed_multiplier());
   set_direction(CLOCKWISE2);
@@ -181,7 +181,7 @@ void set_waves()
   for (int i = 0; i <8; i++)
   {
     set_half_digit(i, clock.digit[i/2].halfs[i%2]);
-    _delay(400 / get_speed_multiplier());
+    delay(200 + (400 - 200) / sqrt(get_speed_multiplier()));
   }
 }
 
