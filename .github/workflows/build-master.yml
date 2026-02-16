@@ -2,7 +2,7 @@ name: PlatformIO Build and Release master
 
 on:
   push:
-    branches: [ master, main, ci-cd ]
+    branches: [ master, main ]
     tags:
       - 'v*'
   pull_request:
