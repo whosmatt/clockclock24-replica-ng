@@ -1,0 +1,87 @@
+name: PlatformIO Build and Release master
+
+on:
+  push:
+    branches: [ master, main, ci-cd ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment:
+          - lolin_c3_mini
+          - lolin_s3_mini
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio
+          key: ${{ runner.os }}-pio-${{ hashFiles('master/platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pio-
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio
+      
+      - name: Build firmware
+        working-directory: ./master
+        run: pio run --environment ${{ matrix.environment }}
+      
+      - name: Rename binary
+        working-directory: ./master
+        run: |
+          cp .pio/build/${{ matrix.environment }}/firmware.bin ${{ matrix.environment }}.bin
+      
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.environment }}
+          path: master/${{ matrix.environment }}.bin
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: '*'
+          merge-multiple: false
+      
+      - name: Create/Update Latest Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: Latest Build
+          body: |
+            Latest automatic build from commit ${{ github.sha }}
+            
+            Built on: ${{ github.event.head_commit.timestamp }}
+            Commit: ${{ github.event.head_commit.message }}
+          files: |
+            artifacts/lolin_c3_mini/lolin_c3_mini.bin
+            artifacts/lolin_s3_mini/lolin_s3_mini.bin
+          prerelease: false
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
