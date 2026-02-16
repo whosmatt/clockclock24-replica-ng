@@ -1,4 +1,4 @@
-# ClockClock 24 Replica
+# clockclock24-replica-ng
 This is the [Vallasc](https://github.com/Vallasc) personal implementation of the "ClockClock 24" by [Humans Since 1982](https://www.humanssince1982.com/), modified my [whosmatt](https://github.com/whosmatt).  
 Refer to the git history for a detailed list of changes.  
 
@@ -12,10 +12,13 @@ This fork is a general overhaul with some new features:
 - [x] Port to ESP32-C3 and ESP32-S3 (LOLIN ESP32-C3 MINI and LOLIN ESP32-S3 MINI can be used as pin-compatible replacements)
 - [x] RGB status LED using onboard addressable LED
 
-## DO NOT USE LOLIN ESP32-C3 MINI
-The software works fine, but some combination of trace lengths and pin capacitance causes the WiFi to be very unstable with the LOLIN ESP32-C3 MINI while it is plugged into the PCB. Using wires or stacking the another pair of pin headers seems to make it work fine, but with the normal assembly the WiFi is unusable. 
-If you need to use a C3, try using extra pin spacers to raise it higher off the pcb or just attach the esp with four wires (5V/VIN, GND, I2C as described in board_definitions.h). If your configuration is unstable, the esp will almost always fail to connect to the configured wifi, and the AP will either not show at all or be very unstable.  
+## LOLIN ESP32-C3 MINI NOT RECOMMENDED
+The RF design of the LOLIN ESP32-C3 MINI is quite bad. Having the board plugged in at the intended spacing reflects back enough power to cause WiFi to be completely unusable, never getting a connection. Raising it with extra spacers or wires helps, but WiFi always ends up lossy and unstable.  
+The code contains a softfix where WiFi TX power is set to the minimum (8.5dBm/7mW vs the original 20dBm/100mW) to reduce noise and ringing. It makes the connection usable (still very lossy compared to s3), but reduces range a lot.  
+The softfix automatically applies to just the `lolin_c3_mini` target, the `lolin_s3_mini` will use normal full TX power and had a flawless connection with super fast OTA in my testing.  
 **The LOLIN ESP32-S3 MINI does not have this issue at all, so it is recommended to use that one instead.**
+
+## 
 
 <div align="center">
 <img width="900"  src="/images/photo1.jpg">
