@@ -23,6 +23,9 @@ bool wifi_connect(const char *ssid, const char *password, const char *mdns)
   led_set_status(LED_CONNECTING);
   WiFi.setHostname(mdns); // Set hostname before mode, see https://github.com/espressif/arduino-esp32/issues/6278
   WiFi.mode(WIFI_STA);
+  #ifdef ARDUINO_LOLIN_C3_MINI
+    WiFi.setTxPower(WIFI_POWER_8_5dBm);
+  #endif
   WiFi.begin(ssid, password);
 
   int i = max_wifi_retries;
@@ -69,6 +72,9 @@ bool wifi_create_AP(const char *ssid, const char *mdns)
   IPAddress AP_NETWORK_MASK(255, 255, 255, 0);
   Serial.println("\nCreating access point");
   WiFi.mode(WIFI_AP);
+  #ifdef ARDUINO_LOLIN_C3_MINI
+    WiFi.setTxPower(WIFI_POWER_8_5dBm);
+  #endif
   if (!WiFi.softAPConfig(AP_LOCAL_IP, AP_GATEWAY_IP, AP_NETWORK_MASK))
   {
     Serial.println("AP Config Failed");
