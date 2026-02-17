@@ -61,6 +61,14 @@ jobs:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     
     steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get short SHA and commit title
+        id: commit-info
+        run: |
+          echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "title=$(git log -1 --pretty=%B | head -n 1)" >> $GITHUB_OUTPUT
+      
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -68,13 +76,13 @@ jobs:
           pattern: '*'
           merge-multiple: false
       
-      - name: Create/Update Latest Release
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: latest
-          name: Latest Build
+          tag_name: ${{ steps.commit-info.outputs.sha }}
+          name: ${{ steps.commit-info.outputs.title }}
           body: |
-            Latest automatic build from commit ${{ github.sha }}
+            Automatic build from commit ${{ github.sha }}
             
             Built on: ${{ github.event.head_commit.timestamp }}
             Commit: ${{ github.event.head_commit.message }}
