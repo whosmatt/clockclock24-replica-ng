@@ -18,11 +18,29 @@ try {
     });
     //fs.writeFileSync('./index.min.html', result);
 
-    const page_h = 
-`#ifndef WEB_PAGE_H
-#define WEB_PAGE_H
-#define WEB_PAGE "${result.replaceAll(`"`, `\\"`)}"
-#endif`
+    // Convert to byte array
+    const bytes = Buffer.from(result, 'utf8');
+    const byteArray = Array.from(bytes);
+
+    // turn into c array string
+    let byteArrayStr = '';
+    for (let i = 0; i < byteArray.length; i++) {
+        if (i % 16 === 0) {
+            byteArrayStr += '\n  ';
+        }
+        byteArrayStr += '0x' + byteArray[i].toString(16).padStart(2, '0');
+        if (i < byteArray.length - 1) {
+            byteArrayStr += ', ';
+        }
+    }
+
+    const page_h = '#ifndef WEB_PAGE_H\n' +
+        '#define WEB_PAGE_H\n' +
+        '#include <pgmspace.h>\n' +
+        '\n' +
+        'const uint8_t WEB_PAGE_HTML[' + byteArray.length + '] PROGMEM = {' + byteArrayStr + '\n};\n' +
+        '\n' +
+        '#endif\n';
 
     fs.writeFileSync('../include/web_page.h', page_h);
     console.log('Generated ../include/web_page.h');
