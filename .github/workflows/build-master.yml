@@ -93,3 +93,21 @@ jobs:
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create/Update Latest Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: Latest - ${{ steps.commit-info.outputs.title }}
+          body: |
+            Latest automatic build from commit ${{ github.sha }}
+            
+            Built on: ${{ github.event.head_commit.timestamp }}
+            Commit: ${{ github.event.head_commit.message }}
+          files: |
+            artifacts/lolin_c3_mini/lolin_c3_mini.bin
+            artifacts/lolin_s3_mini/lolin_s3_mini.bin
+          prerelease: false
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
