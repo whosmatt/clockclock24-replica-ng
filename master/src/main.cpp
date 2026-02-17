@@ -57,7 +57,7 @@ void _delay(int value);
 
 void setup() {
   Serial.begin(115200);
-  Serial.printf("\nclockclock24 replica by Vallasc - %s\n", BOARD_NAME);
+  Serial.printf("\nclockclock24 replica by Vallasc - %s\n", BOARD_TARGET);
   delay(3000);
   
   // Initialize status LED
