@@ -1,5 +1,6 @@
 import { minify } from 'html-minifier';
 import fs from 'fs';
+import zlib from 'zlib';
 
 try {
     console.log('Minimizing ./index.html');
@@ -16,11 +17,11 @@ try {
         minifyCSS: true,
         minifyJS: true
     });
-    //fs.writeFileSync('./index.min.html', result);
-
-    // Convert to byte array
-    const bytes = Buffer.from(result, 'utf8');
-    const byteArray = Array.from(bytes);
+    
+    // Gzip compress the minified HTML
+    console.log('Compressing with gzip');
+    const compressed = zlib.gzipSync(result);
+    const byteArray = Array.from(compressed);
 
     // turn into c array string
     let byteArrayStr = '';

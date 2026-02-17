@@ -57,7 +57,10 @@ void server_stop()
 void handle_get()
 {
   Serial.println("Handle GET /");
-  _server.send_P(200, "text/html", (const char*)WEB_PAGE_HTML, sizeof(WEB_PAGE_HTML));
+  _server.setContentLength(sizeof(WEB_PAGE_HTML));
+  _server.sendHeader("Content-Encoding", "gzip");
+  _server.send(200, "text/html", "");
+  _server.sendContent_P((const char*)WEB_PAGE_HTML, sizeof(WEB_PAGE_HTML));
 }
 
 void handle_get_config()
