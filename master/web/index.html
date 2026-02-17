@@ -1,6 +1,6 @@
 <html>
 <head>
-  <title>ClockClock 24 (replica)</title>
+  <title>ClockClock 24 (replica-ng)</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 490 490'%3E%3Cstyle xmlns='http://www.w3.org/2000/svg'%3E %23fav %7B stroke: %23000; fill: %23000; %7D @media (prefers-color-scheme: dark) %7B %23fav %7B stroke: %23fff; fill: %23fff; %7D %7D %3C/style%3E%3Cg id='fav'%3E%3Cg%3E%3Cpath d='M233.004,0C104.224,0,0,104.212,0,233.004c0,128.781,104.212,233.004,233.004,233.004 c128.782,0,233.004-104.212,233.004-233.004C466.008,104.222,361.796,0,233.004,0z M244.484,242.659l-63.512,75.511 c-5.333,6.34-14.797,7.156-21.135,1.824c-6.34-5.333-7.157-14.795-1.824-21.135l59.991-71.325V58.028c0-8.284,6.716-15,15-15 s15,6.716,15,15v174.976h0C248.004,236.536,246.757,239.956,244.484,242.659z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E" type="image/svg+xml" />
   <style>
 
@@ -243,7 +243,7 @@
 </head>
 <body id="body">
 <div class="spacer"></div>
-<h1>ClockClock 24 (replica)</h1>
+<h1>ClockClock 24 (replica-ng)</h1>
 <div id="art"></div>
 <div class="spacer"></div>
 <div class="title">
@@ -295,11 +295,21 @@
 </form>
 <div class="spacer"></div>
 <div class="title">
-  OTA Update
+  Firmware Update
 </div>
-<a href="/update">
-  <button class="btn" style="width:150px">ElegantOTA</button>
-</a>
+<div style="margin-bottom: 8px;">
+  <p>Board: <span id="board-name">Loading...</span></p>
+</div>
+<div style="margin-bottom: 12px; display: flex; justify-content: center;">
+  <form id="upload-form" onsubmit="return false;" enctype="multipart/form-data" style="margin: 0;">
+    <input type="file" id="firmware-file" accept=".bin" style="display: none;" onchange="uploadFirmware()"/>
+    <button type="button" class="btn" style="width:150px" onclick="document.getElementById('firmware-file').click()">UPLOAD FILE</button>
+  </form>
+  <button type="button" class="btn" style="width:150px" onclick="fetchFirmwareFromGithub()">UPDATE FROM GITHUB</button>
+</div>
+<div style="margin-bottom: 12px;">
+  <p id="update-status" style="margin: 0; color: #888;"></p>
+</div>
 <div class="spacer"></div>
 <div class="spacer"></div>
 <div class="text"> 
@@ -641,10 +651,266 @@
     alert("MQTT configuration saved")
   }
 
+  // Update status tracking
+  let updateInProgress = false
+  
+  // Update status text display
+  function updateStatusDisplay(status) {
+    const statusElement = document.getElementById("update-status")
+    if (!statusElement) return;
+    
+    let message = "";
+    let color = "#888";
+    
+    switch(status.status) {
+      case "idle":
+        message = "";
+        break;
+      case "starting":
+        message = "Initializing update...";
+        color = "#1a7f1a";
+        break;
+      case "uploading":
+      case "fetching":
+        const percent = status.progress || 0;
+        const current = (status.current / 1024).toFixed(1);
+        const total = (status.total / 1024).toFixed(1);
+        if (status.status === "fetching" && percent === 0) {
+          message = "Downloading from GitHub...";
+        } else {
+          message = `${status.status === "fetching" ? "Downloading" : "Uploading"}: ${percent}% (${current}KB / ${total}KB)`;
+        }
+        color = "#1a7f1a";
+        break;
+      case "finishing":
+        message = "Finishing update...";
+        color = "#1a7f1a";
+        break;
+      case "success":
+        message = "Update successful! Device will restart...";
+        color = "#1a7f1a";
+        break;
+      case "error":
+        message = `Error: ${status.error}`;
+        color = "#d32f2f";
+        break;
+      case "cancelled":
+        message = "Update cancelled";
+        color = "#888";
+        break;
+    }
+    
+    statusElement.textContent = message;
+    statusElement.style.color = color;
+  }
+  
+  // Poll update status
+  let statusPollInterval
+  function startStatusPolling() {
+    if (statusPollInterval) clearInterval(statusPollInterval);
+    statusPollInterval = setInterval(async () => {
+      try {
+        const response = await fetch("/api/update/status");
+        if (!response.ok) return;
+        const status = await response.json();
+        updateStatusDisplay(status);
+        
+        if (!status.in_progress && status.status !== "idle") {
+          clearInterval(statusPollInterval);
+          updateInProgress = false;
+          
+          // Auto-refresh on success
+          if (status.status === "success") {
+            setTimeout(() => location.reload(), 3000);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to get update status:", e);
+      }
+    }, 500);
+  }
+  
+  // Upload firmware from file input
+  async function uploadFirmware() {
+    const fileInput = document.getElementById("firmware-file");
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+      alert("Please select a firmware file");
+      return;
+    }
+    
+    if (updateInProgress) {
+      alert("Update already in progress");
+      return;
+    }
+    
+    const file = fileInput.files[0];
+    
+    // Sanity check file size, actual limit is lower
+    const maxSize = 4 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert(`File too large. Maximum size is ${maxSize / 1024 / 1024}MB`);
+      return;
+    }
+    
+    if (!confirm(`Upload ${file.name} (${(file.size / 1024).toFixed(1)}KB)?`)) {
+      return;
+    }
+    
+    updateInProgress = true;
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    // Use XMLHttpRequest for upload progress tracking
+    const xhr = new XMLHttpRequest();
+    
+    xhr.upload.addEventListener("progress", (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        updateStatusDisplay({
+          status: "uploading",
+          error: "",
+          progress: percent,
+          current: e.loaded,
+          total: e.total,
+          in_progress: true
+        });
+      }
+    });
+    
+    xhr.addEventListener("load", () => {
+      fileInput.value = "";  // Clear file input to allow re-selection
+      if (xhr.status === 200) {
+        startStatusPolling();
+      } else {
+        try {
+          const result = JSON.parse(xhr.responseText);
+          updateStatusDisplay({
+            status: "error",
+            error: result.message || "Upload failed",
+            progress: 0,
+            current: 0,
+            total: 0,
+            in_progress: false
+          });
+        } catch (e) {
+          updateStatusDisplay({
+            status: "error",
+            error: "Upload failed",
+            progress: 0,
+            current: 0,
+            total: 0,
+            in_progress: false
+          });
+        }
+        updateInProgress = false;
+      }
+    });
+    
+    xhr.addEventListener("error", () => {
+      fileInput.value = "";  // Clear file input to allow re-selection
+      updateStatusDisplay({
+        status: "error",
+        error: "Upload failed",
+        progress: 0,
+        current: 0,
+        total: 0,
+        in_progress: false
+      });
+      updateInProgress = false;
+    });
+    
+    xhr.open("POST", "/api/update/upload");
+    xhr.send(formData);
+  }
+  
+  // Board target
+  let boardTarget = "unknown";
+  
+  // Load board target from server
+  async function loadBoardInfo() {
+    try {
+      const response = await fetch("/api/update/target");
+      if (!response.ok) return;
+      boardTarget = await response.text();
+      const boardNameElement = document.getElementById("board-name");
+      if (boardNameElement) {
+        boardNameElement.textContent = boardTarget;
+      }
+    } catch (e) {
+      console.error("Failed to load board target:", e);
+    }
+  }
+  
+  // Github release firmware fetcher
+  async function fetchFirmwareFromGithub() {
+    if (updateInProgress) {
+      alert("Update already in progress");
+      return;
+    }
+    
+    // Construct GitHub URL
+    const owner = "whosmatt";
+    const repo = "clockclock24-replica-ng";
+    const tag = "latest"; // Perhaps make this an input in the future
+    const filename = boardTarget + ".bin";
+    const url = `https://github.com/${owner}/${repo}/releases/download/${tag}/${filename}`;
+    
+    if (!confirm(`Update from GitHub?\n\nThis will download and install the latest firmware.`)) {
+      return;
+    }
+    
+    updateInProgress = true;
+    updateStatusDisplay({
+      status: "fetching",
+      error: "",
+      progress: 0,
+      current: 0,
+      total: 0,
+      in_progress: true
+    });
+    
+    try {
+      const response = await fetch("/api/update/fetch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: url
+        })
+      });
+      
+      const result = await response.json();
+      if (!response.ok) {
+        updateStatusDisplay({
+          status: "error",
+          error: result.message || "Fetch failed",
+          progress: 0,
+          current: 0,
+          total: 0,
+          in_progress: false
+        });
+        updateInProgress = false;
+      } else {
+        startStatusPolling();
+      }
+    } catch (e) {
+      console.error("Fetch error:", e);
+      updateStatusDisplay({
+        status: "error",
+        error: e.message || "Fetch failed",
+        progress: 0,
+        current: 0,
+        total: 0,
+        in_progress: false
+      });
+      updateInProgress = false;
+    }
+  }
+
   // On the first run, updates the datetime on the clock and
   // then updates web state
   sendDate()
   updateConfig()
+  loadBoardInfo()
 
   /* Clock animation */
 
