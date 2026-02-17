@@ -61,6 +61,17 @@ jobs:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     
     steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get short SHA
+        id: short-sha
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      
+      - name: Create tag for commit
+        run: |
+          git tag ${{ steps.short-sha.outputs.sha }}
+          git push origin ${{ steps.short-sha.outputs.sha }}
+      
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
