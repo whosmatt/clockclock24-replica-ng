@@ -1,6 +1,6 @@
 #include "web_server.h"
 #include "clock_config.h"
-#include "ota_handler.h"
+#include "update_handler.h"
 #include "mqtt_handler.h"
 
 WebServer _server(80);
@@ -38,7 +38,7 @@ void server_start()
   }
   
   // Initialize OTA update handler
-  ota_init(&_server);
+  update_init(&_server);
 
   Serial.println("WebServer setup done");
 }
@@ -46,7 +46,7 @@ void server_start()
 void handle_webclient()
 {
   _server.handleClient();
-  ota_handle();
+  update_handle();
 }
 
 void server_stop()
@@ -57,7 +57,10 @@ void server_stop()
 void handle_get()
 {
   Serial.println("Handle GET /");
-  _server.send(200, "text/html", WEB_PAGE);
+  _server.setContentLength(sizeof(WEB_PAGE_HTML));
+  _server.sendHeader("Content-Encoding", "gzip");
+  _server.send(200, "text/html", "");
+  _server.sendContent_P((const char*)WEB_PAGE_HTML, sizeof(WEB_PAGE_HTML));
 }
 
 void handle_get_config()

@@ -7,8 +7,8 @@ This fork is a general overhaul with some new features:
 - [x] Home Assistant integration and auto-discovery
 - [x] Networking overhaul (Configurable hostname w/ mDNS, captive portal on AP mode, robust management)
 - [x] Speed customization
-- [x] OTA updates (ElegantOTA)
-- [ ] CI/CD for OTA updates
+- [x] OTA updates (Direct upload or from GitHub CI build)
+- [x] CI/CD for OTA updates
 - [x] Port to ESP32-C3 and ESP32-S3 (LOLIN ESP32-C3 MINI and LOLIN ESP32-S3 MINI can be used as pin-compatible replacements)
 - [x] RGB status LED using onboard addressable LED
 
@@ -94,24 +94,58 @@ Each board has 2 stepper controllers that in total can run 8 motors. As a design
 On the software side, two different projects were made for master and slave, [PlatformIO](https://platformio.org/)  was used for both of them. The project setup is easy with PlatformIO because it automatically downloads the necessary files. 
 
 ### Slave
-The slave code is runned by Raspberry pico, it receives the target hands position through I2C protocol and moves motors accordingly. The I2C address is taken from the position of the 4 switches on the board.
+The slave code is runs on a Raspberry Pi Pico, it receives the target hands position via I2C and drives the motors via step/dir. The I2C address is taken from the position of the 4 switches on the board.
 
 To have a fluid animation, motion must be done using an acceleration curve, so it is used [AccelStepper](http://www.airspayce.com/mikem/arduino/AccelStepper/) library. 
-The code is multicore, one core gets bytes from the I2C bus and saves them in the internal buffer, the other core manages to run directly the stepper motors, doing so the animation is not stopped by the I2C interrupts.
+The code is multicore, one core gets bytes from the I2C bus and saves them in the internal buffer, the other core runs the stepper motors, doing so the animation is not stopped by the I2C interrupts.
 
 
 ### Master
-The master code is runned by ESP32, it is in charge of sending actual hands position to all the boards and to serve the web application.
+The master code runs on an ESP32, it serves the web application and sends the target hand positions with speed acceleration and movement strategy to the slave boards.
 
-When powered on, it tries to connect to the configured WiFi network, if it fails then makes an open network. Time synchronization is made, if internet connection is available, using NTP service or it is taken from the client browser that visits the web app. When time changes it sends to the corresponding board the new hands position, the way in which these are to be moved (clockwise, counter clockwise, min distance, max distance, etc.), the speed and the acceleration. In the meantime, it responds to the requests made by the web application made available at http://192.168.1.10 (AP mode) or http://clockclock24.local.
+When powered on, it tries to connect to the configured WiFi network, with fallback to AP mode.  
+Whenever you visit the web app, time and time zone are synchronized from your browser. Otherwise, NTP is used to continuously keep time.  
+The web app is available at http://clockclock24.local (uses your configured hostname) or http://192.168.1.10 (AP mode only). Your router may also assign a DNS entry for the clock using the hostname, such as http://clockclock24/ (or the respective FQDN).  
+In AP mode, a captive portal is active, and most devices should automatically send you to the web app.
 
-* Animation modes available (for now):
-    1. **Lazy**, moves only clock hands that need to be changed by traveling the minimum distance.
-    2. **Fun**, moves all the clock's hands in a clockwise direction.
-    3. **Waves**, reproduces a domino animation.
+### Flashing (First installation or recovery)
+
+You can get the latest compiled binary for your board from the releases page and flash it directly via esptool or an ESP32 web flasher. You can also clone the project and compile/flash via PlatformIO.  
+Check a basic guide on flashing ESP32 devices to learn more about the boot button and USB drivers. 
+
+#### Status LED
+The onboard addressable RGB LED is used as a status indicator:
+| Color | Status |
+|-|-|
+| Green | Connected to WiFi |
+| Red | Critical Failure - Check serial logs |
+| Blue (blinking) | Connecting to WiFi |
+| Cyan | AP mode active |
+| Yellow (blinking) | OTA update in progress |
+| Yellow (solid) | OTA update successful, rebooting |
+
 
 ### Web interface
-On the web application an exact copy of the clock is shown, animations are also cloned and occur at the same time. The interface allows you to change clock mode, set the hours when it should not work and change the wireless connection.
+On the web application an approximate copy of the clock is shown. The interface allows you to change mode, configure settings, fine-adjust hands and do OTA updates.  
+
+#### ON/OFF and Mode
+
+Animation modes available (for now):
+1. **Lazy**, moves only clock hands that need to be changed by traveling the minimum distance.
+2. **Fun**, moves all clocks in a clockwise direction.
+3. **Waves**, All clocks straighten out and then follow a staggered domino animation. Produces interesting patterns at high speed settings.
+
+#### Speed Multiplier
+The speed multiplier is a global setting that multiplies the speed and acceleration of all animations. It is uncapped, but values above 50-100 may cause the motors to miss steps and lose position. You can only make the clock faster and only integer values are accepted.
+
+#### Sleep Time
+To reduce wear and noise during absence and night time, the clock can automatically turn off at the hours configured in the sleep time settings.
+
+#### MQTT and Home Assistant
+Configuring MQTT allows you to control the mode and on/off state via MQTT. Home Assistant auto-discovery is supported, and the clock will appear as a device with two entities: a select for the mode and a switch for the on/off state. The Sleep Time state will override the on/off state. 
+
+#### Firmware Update
+You can update the firmware directly from the web interface. You can upload your own firmware.bin (make sure to use the correct target), or you can use the `UPDATE FROM GITHUB` button to automatically install the latest automated build form this repository if the clock is connected to the internet.
 
 Credits for the clock's web design animation go to [Manuel Wieser](https://manu.ninja/).
 
