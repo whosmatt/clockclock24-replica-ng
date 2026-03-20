@@ -23,6 +23,7 @@ void server_start()
   _server.begin();
   _server.on("/", HTTP_GET, handle_get);
   _server.on("/config", HTTP_GET, handle_get_config);
+  _server.on("/system", HTTP_GET, handle_get_system);
   _server.on("/time", HTTP_POST, handle_post_time);
   _server.on("/adjust", HTTP_POST, handle_post_adjust);
   _server.on("/mode", HTTP_POST, handle_post_mode);
@@ -102,6 +103,18 @@ void handle_get_config()
       get_mqtt_enabled() ? "true" : "false", get_mqtt_broker(), 
       get_mqtt_port(), get_mqtt_username(), s_time);
   }
+  _server.send(200, "application/json", payload);
+}
+
+void handle_get_system()
+{
+  Serial.println("Handle GET /system");
+  char payload[96];
+  unsigned long uptime_seconds = millis() / 1000; // millis will wrap every ~49 days
+  snprintf(payload, sizeof(payload),
+           "{\"free_heap\":%lu,\"uptime\":%lu}",
+           (unsigned long)ESP.getFreeHeap(),
+           uptime_seconds);
   _server.send(200, "application/json", payload);
 }
 

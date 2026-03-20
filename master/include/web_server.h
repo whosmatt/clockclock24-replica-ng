@@ -44,6 +44,11 @@ void handle_get();
 void handle_get_config();
 
 /**
+ * Handles GET /system
+ */
+void handle_get_system();
+
+/**
  * Handles POST /time
 */
 void handle_post_time();

@@ -15,7 +15,7 @@ String _mqtt_command_topic;
 // State tracking
 unsigned long _last_reconnect_attempt = 0;
 unsigned long _last_state_publish = 0;
-const unsigned long RECONNECT_INTERVAL = 5000;      // 5 seconds
+const unsigned long RECONNECT_INTERVAL = 15000;     // 15 seconds to reduce socket churn during outages
 const unsigned long STATE_PUBLISH_INTERVAL = 30000; // 30 seconds
 bool _state_update_pending = false;
 

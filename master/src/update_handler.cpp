@@ -441,6 +441,16 @@ bool update_in_progress()
     return _update_progress.in_progress;
 }
 
+void schedule_restart(unsigned long delay_ms)
+{
+    if (_update_progress.in_progress) return; // Don't allow scheduling a restart during an update
+
+    shutdown();
+    led_set_status(LED_ERROR);
+    _reboot_time = millis() + delay_ms;
+    Serial.printf("Restart scheduled in %lums\n", delay_ms);
+}
+
 void update_cancel()
 {
     if (_update_progress.in_progress)
