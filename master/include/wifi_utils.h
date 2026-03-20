@@ -8,6 +8,8 @@
 #include "captive_portal.h"
 
 const int max_wifi_retries = 50;
+const unsigned long wifi_failure_timeout_ms = 60000;
+const unsigned long wifi_reconnect_interval_ms = 10000;
 
 /**
  * Connects to a wifi network
@@ -116,6 +118,86 @@ bool wifi_create_AP(const char *ssid, const char *mdns)
 bool is_connected()
 {
   return WiFi.status() == WL_CONNECTED;
+}
+
+/**
+ * STA watchdog: keeps LED in sync, retries reconnect, and requests restart after timeout.
+ * @return true if caller should schedule a restart
+ */
+bool wifi_sta_watchdog_should_restart()
+{
+  static unsigned long disconnected_since = 0;
+  static unsigned long last_reconnect_attempt = 0;
+  static bool restart_requested = false;
+
+  bool sta_connected = (WiFi.status() == WL_CONNECTED);
+  if (sta_connected)
+  {
+    disconnected_since = 0;
+    last_reconnect_attempt = 0;
+    restart_requested = false;
+    led_set_status(LED_CONNECTED);
+    return false;
+  }
+
+  unsigned long now = millis();
+  led_set_status(LED_CONNECTING);
+  if (disconnected_since == 0)
+  {
+    disconnected_since = now;
+    Serial.println("WiFi STA disconnected");
+  }
+
+  if (last_reconnect_attempt == 0 || (now - last_reconnect_attempt) >= wifi_reconnect_interval_ms)
+  {
+    WiFi.reconnect();
+    last_reconnect_attempt = now;
+  }
+
+  if (!restart_requested && (now - disconnected_since) >= wifi_failure_timeout_ms)
+  {
+    restart_requested = true;
+    Serial.println("WiFi STA unavailable for 60s");
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * AP watchdog: keeps LED in sync and requests restart if AP remains unhealthy.
+ * @return true if caller should schedule a restart
+ */
+bool wifi_ap_watchdog_should_restart()
+{
+  static unsigned long unhealthy_since = 0;
+  static bool restart_requested = false;
+
+  bool ap_healthy = (WiFi.softAPIP() != IPAddress(0, 0, 0, 0));
+  if (ap_healthy)
+  {
+    unhealthy_since = 0;
+    restart_requested = false;
+    led_set_status(LED_AP_MODE);
+    return false;
+  }
+
+  unsigned long now = millis();
+  led_set_status(LED_ERROR);
+  if (unhealthy_since == 0)
+  {
+    unhealthy_since = now;
+    Serial.println("WiFi AP unhealthy (softAPIP is 0.0.0.0)");
+  }
+
+  if (!restart_requested && (now - unhealthy_since) >= wifi_failure_timeout_ms)
+  {
+    restart_requested = true;
+    Serial.println("WiFi AP unhealthy for 60s");
+    return true;
+  }
+
+  return false;
 }
 
 #endif

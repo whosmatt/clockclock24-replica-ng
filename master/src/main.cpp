@@ -14,10 +14,12 @@
 #include "status_led.h"
 #include "captive_portal.h"
 #include "mqtt_handler.h"
+#include "update_handler.h"
 
 int last_hour = -1;
 int last_minute = -1;
 bool is_stopped = false;
+const unsigned long SCHEDULED_RESTART_DELAY_MS = 3000;
 
 /**
  * Sets clock to the current time
@@ -94,6 +96,29 @@ void setup() {
 }
 
 void loop() {
+  if (!update_in_progress())
+  {
+    if (get_active_connection_mode() == EXT_CONN)
+    {
+      if (wifi_sta_watchdog_should_restart())
+      {
+        Serial.println("Scheduling restart from STA watchdog");
+        schedule_restart(SCHEDULED_RESTART_DELAY_MS);
+      }
+    }
+    else if (get_active_connection_mode() == HOTSPOT)
+    {
+      if (wifi_ap_watchdog_should_restart())
+      {
+        Serial.println("Scheduling restart from AP watchdog");
+        schedule_restart(SCHEDULED_RESTART_DELAY_MS);
+      }
+    }
+    else
+    {
+      led_set_status(LED_ERROR);
+    }
+  }
 
   led_update();
   
