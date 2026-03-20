@@ -37,6 +37,14 @@
       margin-bottom: 8px;
       text-align: center;
     }
+
+        .system-stats {
+          color: #b8b8b8;
+          text-align: center;
+          margin-top: 8px;
+          margin-bottom: 16px;
+          line-height: 1.5;
+        }
     
     a {
       color: #8a8a8a;
@@ -311,6 +319,10 @@
   <p id="update-status" style="margin: 0; color: #888;"></p>
 </div>
 <div class="spacer"></div>
+<div id="system-stats" class="system-stats">
+  <small>Free Heap: <span id="stat-free-heap">--</span></small><br/>
+  <small>Uptime: <span id="stat-uptime">--</span></small>
+</div>
 <div class="spacer"></div>
 <div class="text"> 
   <p><small>Code</small><br/><a href="https://github.com/vallasc">Giacomo Vallorani</a><br/><a href="https://github.com/whosmatt">whosmatt</a></p>
@@ -840,6 +852,41 @@
       console.error("Failed to load board target:", e);
     }
   }
+
+  function formatUptime(totalSeconds) {
+    const days = Math.floor(totalSeconds / 86400)
+    const hours = Math.floor((totalSeconds % 86400) / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+
+    if (days > 0)
+      return `${days}d ${hours}h ${minutes}m ${seconds}s`
+    if (hours > 0)
+      return `${hours}h ${minutes}m ${seconds}s`
+    if (minutes > 0)
+      return `${minutes}m ${seconds}s`
+    return `${seconds}s`
+  }
+
+  async function loadSystemStats() {
+    try {
+      const response = await fetch("/system")
+      if (!response.ok)
+        return
+
+      const stats = await response.json()
+      const freeHeap = document.getElementById("stat-free-heap")
+      const uptime = document.getElementById("stat-uptime")
+      if (!freeHeap || !uptime)
+        return
+
+      const freeHeapKb = Math.round((stats.free_heap || 0) / 1024)
+      freeHeap.textContent = `${freeHeapKb} KB`
+      uptime.textContent = formatUptime(stats.uptime || 0)
+    } catch (e) {
+      console.error("Failed to load system stats:", e)
+    }
+  }
   
   // Github release firmware fetcher
   async function fetchFirmwareFromGithub() {
@@ -911,6 +958,8 @@
   sendDate()
   updateConfig()
   loadBoardInfo()
+  loadSystemStats()
+  setInterval(loadSystemStats, 10000)
 
   /* Clock animation */
 
