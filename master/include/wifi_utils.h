@@ -26,6 +26,7 @@ bool wifi_connect(const char *ssid, const char *password, const char *mdns)
   #ifdef ARDUINO_LOLIN_C3_MINI
     WiFi.setTxPower(WIFI_POWER_8_5dBm);
   #endif
+  WiFi.persistent(false);
   WiFi.begin(ssid, password);
 
   int i = max_wifi_retries;
