@@ -34,4 +34,13 @@ bool update_in_progress();
  */
 void update_cancel();
 
+/**
+ * Schedule a device restart after a delay
+ * Stops the clock, sets the LED to error, and restarts via the existing
+ * update_handle() reboot path so the restart is always handled cleanly.
+ * If an OTA update is in progress, the request is ignored.
+ * @param delay_ms  milliseconds to wait before rebooting
+ */
+void schedule_restart(unsigned long delay_ms);
+
 #endif
