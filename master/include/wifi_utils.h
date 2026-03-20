@@ -27,6 +27,7 @@ bool wifi_connect(const char *ssid, const char *password, const char *mdns)
     WiFi.setTxPower(WIFI_POWER_8_5dBm);
   #endif
   WiFi.persistent(false);
+  WiFi.setAutoReconnect(true);
   WiFi.begin(ssid, password);
 
   int i = max_wifi_retries;
