@@ -31,6 +31,7 @@ void server_start()
   _server.on("/sleep", HTTP_POST, handle_post_sleep);
   _server.on("/connection", HTTP_POST, handle_post_connection);
   _server.on("/mqtt", HTTP_POST, handle_post_mqtt);
+  _server.on("/restart", HTTP_POST, handle_post_restart);
 
   // Captive portal: redirect all unknown requests to root when in AP mode
   if (get_active_connection_mode() == HOTSPOT)
@@ -238,6 +239,21 @@ void handle_post_mqtt()
   if (get_active_connection_mode() == EXT_CONN) {
     mqtt_init();
   }
+}
+
+void handle_post_restart()
+{
+  Serial.println("Handle POST /restart");
+  if (update_in_progress())
+  {
+    _server.send(409, "application/json",
+                 "{\"status\":\"busy\",\"message\":\"Update in progress\"}");
+    return;
+  }
+
+  schedule_restart(3000);
+  _server.send(200, "application/json",
+               "{\"status\":\"scheduled\",\"message\":\"Restart scheduled\"}");
 }
 
 bool is_time_changed_browser()

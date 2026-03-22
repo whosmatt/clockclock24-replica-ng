@@ -314,6 +314,7 @@
     <button type="button" class="btn" style="width:150px" onclick="document.getElementById('firmware-file').click()">UPLOAD FILE</button>
   </form>
   <button type="button" class="btn" style="width:150px" onclick="fetchFirmwareFromGithub()">UPDATE FROM GITHUB</button>
+  <button type="button" class="btn" style="width:150px" onclick="restartDevice()">RESTART</button>
 </div>
 <div style="margin-bottom: 12px;">
   <p id="update-status" style="margin: 0; color: #888;"></p>
@@ -950,6 +951,45 @@
         in_progress: false
       });
       updateInProgress = false;
+    }
+  }
+
+  async function restartDevice() {
+    if (updateInProgress) {
+      alert("Update in progress")
+      return
+    }
+
+    if (!confirm("Restart device now?")) {
+      return
+    }
+
+    try {
+      const response = await fetch("/restart", {
+        method: "POST"
+      })
+
+      if (!response.ok) {
+        let message = "Failed to schedule restart"
+        try {
+          const result = await response.json()
+          if (result && result.message)
+            message = result.message
+        } catch (e) {}
+        alert(message)
+        return
+      }
+
+      const statusElement = document.getElementById("update-status")
+      if (statusElement) {
+        statusElement.textContent = "Restart scheduled..."
+        statusElement.style.color = "#1a7f1a"
+      }
+
+      setTimeout(() => location.reload(), 3000)
+    } catch (e) {
+      console.error("Restart request failed:", e)
+      alert("Failed to schedule restart")
     }
   }
 
