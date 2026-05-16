@@ -11,11 +11,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        environment:
-          - lolin_c3_mini
-          - lolin_s3_mini
 
     steps:
       - uses: actions/checkout@v4
@@ -42,18 +37,21 @@ jobs:
       
       - name: Build firmware
         working-directory: ./master
-        run: pio run --environment ${{ matrix.environment }}
+        run: pio run --environment lolin_c3_mini --environment lolin_s3_mini
       
-      - name: Rename binary
+      - name: Rename binaries
         working-directory: ./master
         run: |
-          cp .pio/build/${{ matrix.environment }}/firmware.bin ${{ matrix.environment }}.bin
+          cp .pio/build/lolin_c3_mini/firmware.bin lolin_c3_mini.bin
+          cp .pio/build/lolin_s3_mini/firmware.bin lolin_s3_mini.bin
       
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.environment }}
-          path: master/${{ matrix.environment }}.bin
+          name: firmware-binaries
+          path: |
+            master/lolin_c3_mini.bin
+            master/lolin_s3_mini.bin
 
   release:
     needs: build
@@ -90,8 +88,8 @@ jobs:
             Built on: ${{ github.event.head_commit.timestamp }}
             Commit: ${{ github.event.head_commit.message }}
           files: |
-            artifacts/lolin_c3_mini/lolin_c3_mini.bin
-            artifacts/lolin_s3_mini/lolin_s3_mini.bin
+            artifacts/firmware-binaries/lolin_c3_mini.bin
+            artifacts/firmware-binaries/lolin_s3_mini.bin
           prerelease: false
           draft: false
         env:
