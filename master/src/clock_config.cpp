@@ -23,6 +23,14 @@ char _mqtt_username[64];
 char _mqtt_password[64];
 bool _mqtt_enabled = false;
 
+// Daily restart configuration
+bool _daily_restart_enabled = true;
+int _daily_restart_hour = 5; // 5 AM
+
+// Daily restart configuration
+bool _daily_restart_enabled = true;
+int _daily_restart_hour = 5; // 5 AM
+
 void begin_config()
 {
   prefs.begin("clockclock24");
@@ -40,6 +48,8 @@ void begin_config()
   strncpy(_mqtt_username, prefs.getString("mqtt_user", "").c_str(), sizeof(_mqtt_username));
   strncpy(_mqtt_password, prefs.getString("mqtt_pass", "").c_str(), sizeof(_mqtt_password));
   _mqtt_enabled = prefs.getBool("mqtt_enabled", false);
+  _daily_restart_enabled = prefs.getBool("daily_restart_en", true);
+  _daily_restart_hour = prefs.getInt("daily_restart_hr", 5);
   if(prefs.isKey("sleep_time"))
     prefs.getBytes("sleep_time", _sleep_time, sizeof(_sleep_time));
   else
@@ -66,6 +76,8 @@ void clear_config()
   strncpy(_mqtt_username, "", sizeof(_mqtt_username));
   strncpy(_mqtt_password, "", sizeof(_mqtt_password));
   _mqtt_enabled = false;
+  _daily_restart_enabled = true;
+  _daily_restart_hour = 5;
   memset(_sleep_time, 0, sizeof(_sleep_time));
 }
 
@@ -274,4 +286,48 @@ void set_speed_multiplier(int value)
     _speed_multiplier = value;
     prefs.putInt("speed_mult", value);
   }
+}
+
+bool get_daily_restart_enabled()
+{
+  return _daily_restart_enabled;
+}
+
+int get_daily_restart_hour()
+{
+  return _daily_restart_hour;
+}
+
+void set_daily_restart_enabled(bool value)
+{
+  _daily_restart_enabled = value;
+  prefs.putBool("daily_restart_en", value);
+}
+
+void set_daily_restart_hour(int value)
+{
+  _daily_restart_hour = (value >= 0 && value <= 23) ? value : 5;
+  prefs.putInt("daily_restart_hr", _daily_restart_hour);
+}
+
+bool get_daily_restart_enabled()
+{
+  return _daily_restart_enabled;
+}
+
+int get_daily_restart_hour()
+{
+  return _daily_restart_hour;
+}
+
+void set_daily_restart_enabled(bool value)
+{
+  _daily_restart_enabled = value;
+  prefs.putBool("daily_restart_en", value);
+}
+
+void set_daily_restart_hour(int value)
+{
+  _daily_restart_hour = (value >= 0 && value <= 23) ? value : 5;
+  prefs.putInt("daily_restart_hr", _daily_restart_hour);
 }

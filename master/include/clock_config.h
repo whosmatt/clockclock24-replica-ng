@@ -232,4 +232,28 @@ void set_mqtt_enabled(bool value);
  */
 void set_speed_multiplier(int value);
 
+/**
+ * Gets daily restart enabled state
+ * @return true if daily restart is enabled
+ */
+bool get_daily_restart_enabled();
+
+/**
+ * Gets daily restart hour (0-23)
+ * @return hour at which daily restart occurs
+ */
+int get_daily_restart_hour();
+
+/**
+ * Sets daily restart enabled state
+ * @param value   true to enable daily restart
+ */
+void set_daily_restart_enabled(bool value);
+
+/**
+ * Sets daily restart hour
+ * @param value   hour at which to restart (0-23)
+ */
+void set_daily_restart_hour(int value);
+
 #endif
