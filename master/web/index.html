@@ -314,10 +314,49 @@
     <button type="button" class="btn" style="width:150px" onclick="document.getElementById('firmware-file').click()">UPLOAD FILE</button>
   </form>
   <button type="button" class="btn" style="width:150px" onclick="fetchFirmwareFromGithub()">UPDATE FROM GITHUB</button>
-  <button type="button" class="btn" style="width:150px" onclick="restartDevice()">RESTART</button>
 </div>
 <div style="margin-bottom: 12px;">
   <p id="update-status" style="margin: 0; color: #888;"></p>
+</div>
+<div class="spacer"></div>
+<div class="title">
+  Daily Restart
+</div>
+<div style="margin: 12px; text-align: center;">
+  <div style="margin-bottom: 8px;">
+    <input type="checkbox" id="daily-restart-enabled" style="width: 20px; height: 20px; margin: 0 8px 0 0; cursor: pointer;"/>
+    <label for="daily-restart-enabled" style="cursor: pointer;">Enable automatic daily restart at</label>
+  </div>
+  <div style="display: flex; justify-content: center; align-items: center; gap: 8px;">
+    <select id="daily-restart-hour" class="input-text" style="width: 80px;">
+      <option value="0">00:00</option>
+      <option value="1">01:00</option>
+      <option value="2">02:00</option>
+      <option value="3">03:00</option>
+      <option value="4">04:00</option>
+      <option value="5">05:00</option>
+      <option value="6">06:00</option>
+      <option value="7">07:00</option>
+      <option value="8">08:00</option>
+      <option value="9">09:00</option>
+      <option value="10">10:00</option>
+      <option value="11">11:00</option>
+      <option value="12">12:00</option>
+      <option value="13">13:00</option>
+      <option value="14">14:00</option>
+      <option value="15">15:00</option>
+      <option value="16">16:00</option>
+      <option value="17">17:00</option>
+      <option value="18">18:00</option>
+      <option value="19">19:00</option>
+      <option value="20">20:00</option>
+      <option value="21">21:00</option>
+      <option value="22">22:00</option>
+      <option value="23">23:00</option>
+    </select>
+    <button type="button" class="btn" style="width:100px" onclick="saveDailyRestart()">SAVE</button>
+    <button type="button" class="btn" style="width:150px" onclick="restartDevice()">RESTART NOW</button>
+  </div>
 </div>
 <div class="spacer"></div>
 <div id="system-stats" class="system-stats">
@@ -888,6 +927,51 @@
       console.error("Failed to load system stats:", e)
     }
   }
+
+  async function loadDailyRestart() {
+    try {
+      const response = await fetch("/daily-restart")
+      if (!response.ok)
+        return
+
+      const config = await response.json()
+      const enabledCheckbox = document.getElementById("daily-restart-enabled")
+      const hourSelect = document.getElementById("daily-restart-hour")
+      if (enabledCheckbox && hourSelect) {
+        enabledCheckbox.checked = config.enabled
+        hourSelect.value = config.hour
+      }
+    } catch (e) {
+      console.error("Failed to load daily restart config:", e)
+    }
+  }
+
+  async function saveDailyRestart() {
+    const enabledCheckbox = document.getElementById("daily-restart-enabled")
+    const hourSelect = document.getElementById("daily-restart-hour")
+    if (!enabledCheckbox || !hourSelect) return
+
+    const formData = new FormData()
+    formData.append("enabled", enabledCheckbox.checked ? "1" : "0")
+    formData.append("hour", hourSelect.value)
+
+    try {
+      const response = await fetch("/daily-restart", {
+        method: "POST",
+        body: formData
+      })
+
+      if (!response.ok) {
+        alert("Failed to save daily restart config")
+        return
+      }
+
+      alert("Daily restart configuration saved")
+    } catch (e) {
+      console.error("Save daily restart error:", e)
+      alert("Failed to save daily restart config")
+    }
+  }
   
   // Github release firmware fetcher
   async function fetchFirmwareFromGithub() {
@@ -999,6 +1083,7 @@
   updateConfig()
   loadBoardInfo()
   loadSystemStats()
+  loadDailyRestart()
   setInterval(loadSystemStats, 10000)
 
   /* Clock animation */
