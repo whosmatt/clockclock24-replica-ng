@@ -27,10 +27,6 @@ bool _mqtt_enabled = false;
 bool _daily_restart_enabled = true;
 int _daily_restart_hour = 5; // 5 AM
 
-// Daily restart configuration
-bool _daily_restart_enabled = true;
-int _daily_restart_hour = 5; // 5 AM
-
 void begin_config()
 {
   prefs.begin("clockclock24");
@@ -286,28 +282,6 @@ void set_speed_multiplier(int value)
     _speed_multiplier = value;
     prefs.putInt("speed_mult", value);
   }
-}
-
-bool get_daily_restart_enabled()
-{
-  return _daily_restart_enabled;
-}
-
-int get_daily_restart_hour()
-{
-  return _daily_restart_hour;
-}
-
-void set_daily_restart_enabled(bool value)
-{
-  _daily_restart_enabled = value;
-  prefs.putBool("daily_restart_en", value);
-}
-
-void set_daily_restart_hour(int value)
-{
-  _daily_restart_hour = (value >= 0 && value <= 23) ? value : 5;
-  prefs.putInt("daily_restart_hr", _daily_restart_hour);
 }
 
 bool get_daily_restart_enabled()

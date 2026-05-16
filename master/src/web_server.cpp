@@ -8,6 +8,10 @@ WebServer _server(80);
 t_browser_time _browser_time = {0, 0, 0, 0, 0, 0};
 bool _time_changed_browser = false;
 
+// Forward declarations
+void handle_get_daily_restart();
+void handle_post_daily_restart();
+
 void handle_captive_portal()
 {
   // Redirect all unknown requests to root (for captive portal)
