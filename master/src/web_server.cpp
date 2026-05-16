@@ -31,6 +31,8 @@ void server_start()
   _server.on("/sleep", HTTP_POST, handle_post_sleep);
   _server.on("/connection", HTTP_POST, handle_post_connection);
   _server.on("/mqtt", HTTP_POST, handle_post_mqtt);
+  _server.on("/daily-restart", HTTP_GET, handle_get_daily_restart);
+  _server.on("/daily-restart", HTTP_POST, handle_post_daily_restart);
   _server.on("/restart", HTTP_POST, handle_post_restart);
 
   // Captive portal: redirect all unknown requests to root when in AP mode
@@ -97,12 +99,17 @@ void handle_get_config()
       "\"mqtt_broker\":\"%s\","
       "\"mqtt_port\":%d,"
       "\"mqtt_username\":\"%s\","
+      "\"daily_restart_enabled\":%s,"
+      "\"daily_restart_hour\":%d,"
       "\"sleep_time\":%s}",
       get_clock_animation_mode(), get_clock_enabled() ? "true" : "false", 
       get_connection_mode(), get_ssid(), get_password(), get_hostname(), 
       get_speed_multiplier(), 
       get_mqtt_enabled() ? "true" : "false", get_mqtt_broker(), 
-      get_mqtt_port(), get_mqtt_username(), s_time);
+      get_mqtt_port(), get_mqtt_username(), 
+      get_daily_restart_enabled() ? "true" : "false", 
+      get_daily_restart_hour(), 
+      s_time);
   }
   _server.send(200, "application/json", payload);
 }
@@ -254,6 +261,39 @@ void handle_post_restart()
   schedule_restart(3000);
   _server.send(200, "application/json",
                "{\"status\":\"scheduled\",\"message\":\"Restart scheduled\"}");
+}
+
+void handle_get_daily_restart()
+{
+  Serial.println("Handle GET /daily-restart");
+  char payload[96];
+  snprintf(payload, sizeof(payload),
+           "{\"enabled\":%s,\"hour\":%d}",
+           get_daily_restart_enabled() ? "true" : "false",
+           get_daily_restart_hour());
+  _server.send(200, "application/json", payload);
+}
+
+void handle_post_daily_restart()
+{
+  Serial.println("Handle POST /daily-restart");
+  if (_server.hasArg("enabled"))
+  {
+    bool enabled = _server.arg("enabled").toInt() != 0;
+    set_daily_restart_enabled(enabled);
+  }
+  if (_server.hasArg("hour"))
+  {
+    int hour = _server.arg("hour").toInt();
+    set_daily_restart_hour(hour);
+  }
+  
+  char payload[96];
+  snprintf(payload, sizeof(payload),
+           "{\"enabled\":%s,\"hour\":%d}",
+           get_daily_restart_enabled() ? "true" : "false",
+           get_daily_restart_hour());
+  _server.send(200, "application/json", payload);
 }
 
 bool is_time_changed_browser()

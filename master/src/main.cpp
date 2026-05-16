@@ -20,6 +20,7 @@ int last_hour = -1;
 int last_minute = -1;
 bool is_stopped = false;
 const unsigned long SCHEDULED_RESTART_DELAY_MS = 3000;
+static int last_restart_day = -1;
 
 /**
  * Sets clock to the current time
@@ -96,6 +97,19 @@ void setup() {
 }
 
 void loop() {
+  // Daily restart at configured hour
+  if (!update_in_progress() && get_daily_restart_enabled())
+  {
+    int current_hour = hour();
+    int current_day = day();
+    if (current_hour == get_daily_restart_hour() && current_day != last_restart_day)
+    {
+      last_restart_day = current_day;
+      Serial.printf("Daily restart at %d:00\n", current_hour);
+      schedule_restart(SCHEDULED_RESTART_DELAY_MS);
+    }
+  }
+
   if (!update_in_progress())
   {
     if (get_active_connection_mode() == EXT_CONN)
