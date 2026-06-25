@@ -177,7 +177,28 @@
       padding-bottom: 8px;
       margin-bottom: 0;
     }
-    
+
+    /* Mode picker: ON toggle on its own line, modes wrapping below */
+    #modes {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 100%;
+    }
+
+    .mode-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 100%;
+    }
+
+    .mode-btn {
+      width: auto;
+      float: none;
+      padding: 0 14px;
+    }
+
     .checkbox {
       width: 44px;
       height: 16px;
@@ -426,13 +447,11 @@
   // Makes modes buttons
   function genModes() {
     let html = `<div id="clock-enabled" class="btn ${clockEnabled ? "active" : ""}" style="width: 100px; margin-bottom: 16px;" onclick="toggleClockEnabled()">${clockEnabled ? "ON" : "OFF"}</div>`
+    html += `<div class="mode-list">`
     let i = 0
-    for (let m of modes) {
-      // Break onto a second row at DIAGONAL
-      if (m === "DIAGONAL")
-        html += `<div style="clear:both"></div>`
-      html += `<div id="mode-${i}" class="btn ${i === selectedMode ? "active" : ""}" onclick="selectMode(${i++})">${m}</div>`
-    }
+    for (let m of modes)
+      html += `<div id="mode-${i}" class="btn mode-btn ${i === selectedMode ? "active" : ""}" onclick="selectMode(${i++})">${m}</div>`
+    html += `</div>`
     document.getElementById("modes").innerHTML = html
   }
 
