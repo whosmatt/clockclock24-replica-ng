@@ -92,7 +92,27 @@ void set_digit(int index, t_digit digit);
 */
 void set_half_digit(int index, t_half_digitl half);
 
-/** 
+/**
+ * Sends a pre-built half digit to the specified board and increments
+ * the state counter (use when per-hand direction control is needed)
+ * @param index     digit index (0 <= index < 8)
+ * @param half      half digit value
+*/
+void set_half_digit_full(int index, t_half_digit half);
+
+/**
+ * Updates a single clock (position p) within half digit hd, leaving the
+ * other clocks untouched. Speed and acceleration are taken from the globals,
+ * mode_h and mode_m are set independently.
+ * @param hd        half digit index (0 <= hd < 8)
+ * @param p         clock position (0 <= p < 3)
+ * @param lite      target angles for the clock
+ * @param mode_h    direction mode for the hour hand
+ * @param mode_m    direction mode for the minute hand
+*/
+void set_single_clock_full(int hd, int p, t_half_digitl lite, int mode_h, int mode_m);
+
+/**
  * Sets the specified time on the clock
  * @param h     hour
  * @param m     minute

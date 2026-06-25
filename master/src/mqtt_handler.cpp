@@ -166,6 +166,46 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
                     set_clock_animation_mode(WAVES);
                     _state_update_pending = true;
                 }
+                else if (mode_value == "PROPELLER")
+                {
+                    set_clock_animation_mode(PROPELLER);
+                    _state_update_pending = true;
+                }
+                else if (mode_value == "ARROW")
+                {
+                    set_clock_animation_mode(ARROW);
+                    _state_update_pending = true;
+                }
+                else if (mode_value == "RIPPLE")
+                {
+                    set_clock_animation_mode(RIPPLE);
+                    _state_update_pending = true;
+                }
+                else if (mode_value == "BUBBLE")
+                {
+                    set_clock_animation_mode(BUBBLE);
+                    _state_update_pending = true;
+                }
+                else if (mode_value == "GEAR")
+                {
+                    set_clock_animation_mode(GEAR);
+                    _state_update_pending = true;
+                }
+                else if (mode_value == "DIAGONAL")
+                {
+                    set_clock_animation_mode(DIAGONAL);
+                    _state_update_pending = true;
+                }
+                else if (mode_value == "CASCADE")
+                {
+                    set_clock_animation_mode(CASCADE);
+                    _state_update_pending = true;
+                }
+                else if (mode_value == "CYCLE")
+                {
+                    set_clock_animation_mode(CYCLE);
+                    _state_update_pending = true;
+                }
             }
         }
 
@@ -235,7 +275,7 @@ void publish_discovery_select()
     payload += "\"value_template\":\"{{value_json.mode}}\",";
     payload += "\"qos\":0,";
     payload += "\"optimistic\":false,";
-    payload += "\"options\":[\"LAZY\",\"FUN\",\"WAVES\"],";
+    payload += "\"options\":[\"LAZY\",\"FUN\",\"WAVES\",\"PROPELLER\",\"ARROW\",\"RIPPLE\",\"BUBBLE\",\"GEAR\",\"DIAGONAL\",\"CASCADE\",\"CYCLE\"],";
     payload += "\"device\":{";
     payload += "\"identifiers\":[\"" + hostname + "\"],";
     payload += "\"name\":\"ClockClock24\",";
@@ -286,6 +326,22 @@ const char *get_mode_string(int mode)
         return "FUN";
     case WAVES:
         return "WAVES";
+    case PROPELLER:
+        return "PROPELLER";
+    case ARROW:
+        return "ARROW";
+    case RIPPLE:
+        return "RIPPLE";
+    case BUBBLE:
+        return "BUBBLE";
+    case GEAR:
+        return "GEAR";
+    case DIAGONAL:
+        return "DIAGONAL";
+    case CASCADE:
+        return "CASCADE";
+    case CYCLE:
+        return "CYCLE";
     default:
         return "LAZY";
     }

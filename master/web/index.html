@@ -75,16 +75,16 @@
     .clock-smallHand,
     .clock-largeHand {
       transform-origin: 50px center;
-      transition-timing-function: ease;
-      transition: transform var(--animation-time);
     }
-    
+
     .clock-smallHand {
       transform: rotateZ(var(--small-hand));
+      transition: transform var(--animation-time-small, var(--animation-time)) var(--timing, ease);
     }
-    
+
     .clock-largeHand {
       transform: rotateZ(var(--large-hand));
+      transition: transform var(--animation-time-large, var(--animation-time)) var(--timing, ease);
     }
     
     .hidden .btn-clock {
@@ -393,6 +393,8 @@
 
   // Current selected animation mode
   let selectedMode = 0
+  // Animation mode names, indices match the firmware's clock_modes enum
+  const modes = ["LAZY", "FUN", "WAVES", "PROPELLER", "ARROW", "RIPPLE", "BUBBLE", "GEAR", "DIAGONAL", "CASCADE", "CYCLE"]
   // Current clock enabled state
   let clockEnabled = true
   // Current selected mode
@@ -421,13 +423,16 @@
     return `<div id="clock-${index}" class="clock-box hidden"><svg class="clock clock--${index}" width="100" height="100" viewBox="0 0 100 100" onclick="selectClock(${index})"><path class="clock-smallHand" d="M50,47 C48.3431458,47 47,48.3431458 47,50 C47,51.6568542 48.3431458,53 50,53 L95,53 L95,47 L50,47 Z" stroke="none" fill="#FFF" fill-rule="evenodd"></path><path class="clock-largeHand" d="M50,47 C48.3431458,47 47,48.3431458 47,50 C47,51.6568542 48.3431458,53 50,53 L100,53 L100,47 L50,47 Z" stroke="none" fill="#FFF" fill-rule="evenodd"></path></svg><div class="btn-clock btn-clock-tl" onclick="adjustHand(${index}, 0, 1)">H+</div><div class="btn-clock btn-clock-tr" onclick="adjustHand(${index}, 1, 0)">M+</div><div class="btn-clock btn-clock-bl" onclick="adjustHand(${index}, 0, -1)">H-</div><div class="btn-clock btn-clock-br" onclick="adjustHand(${index}, -1, 0)">M-</div></div>`
   }
 
-  // Makes modes buttons 
+  // Makes modes buttons
   function genModes() {
-    let modes = ["LAZY", "FUN", "WAVES"]
     let html = `<div id="clock-enabled" class="btn ${clockEnabled ? "active" : ""}" style="width: 100px; margin-bottom: 16px;" onclick="toggleClockEnabled()">${clockEnabled ? "ON" : "OFF"}</div>`
     let i = 0
-    for (let m of modes)
+    for (let m of modes) {
+      // Break onto a second row at DIAGONAL
+      if (m === "DIAGONAL")
+        html += `<div style="clear:both"></div>`
       html += `<div id="mode-${i}" class="btn ${i === selectedMode ? "active" : ""}" onclick="selectMode(${i++})">${m}</div>`
+    }
     document.getElementById("modes").innerHTML = html
   }
 
@@ -475,10 +480,14 @@
 
   // Called on buttons clicks to select the mode
   function selectMode(mode) {
-    if(selectedMode !== undefined)
-      document.getElementById("mode-" + selectedMode).classList.remove("active")
+    // The previous button may not exist (e.g. a stale/out-of-range mode)
+    if(selectedMode !== undefined) {
+      const prev = document.getElementById("mode-" + selectedMode)
+      if(prev) prev.classList.remove("active")
+    }
     selectedMode = mode
-    document.getElementById("mode-" + selectedMode).classList.add("active")
+    const curr = document.getElementById("mode-" + selectedMode)
+    if(curr) curr.classList.add("active")
     saveMode(selectedMode, clockEnabled)
   }
 
@@ -595,8 +604,10 @@
     sleep = res.sleep_time
     if(selectedDay !== undefined)
       genHours(selectedDay)
-    // Update clock mode and enabled state
+    // Update clock mode and enabled state, clamp a stale/out-of-range value
     selectedMode = res.clock_mode
+    if(selectedMode < 0 || selectedMode >= modes.length)
+      selectedMode = 0
     clockEnabled = res.clock_enabled !== undefined ? res.clock_enabled : true
     genModes()
     if (!clockEnabled) {
@@ -1119,6 +1130,36 @@
     [270, 90]
   ]
 
+  // d_joint: all hands down-left
+  const digit_joint = [
+    [225, 225],
+    [225, 225],
+    [225, 225],
+    [225, 225],
+    [225, 225],
+    [225, 225]
+  ]
+
+  // d_diagonal
+  const digit_diag = [
+    [225, 45],
+    [225, 45],
+    [225, 45],
+    [225, 45],
+    [225, 45],
+    [225, 45]
+  ]
+
+  // d_bubble
+  const digit_bubble = [
+    [270, 0],
+    [90, 0],
+    [270, 0],
+    [180, 270],
+    [180, 90],
+    [180, 270]
+  ]
+
   // Number's digits
   const digits = [
     [    /* 0 */
@@ -1200,11 +1241,14 @@
   let current_state = Array(4).fill().map(() => Array(6).fill().map(()=> [270, 270]))
 
   // Sets hand[id] to specified angles
-  function setHands(id, h, m, sec) {
+  function setHands(id, h, m, sec, secM = sec, timing = 'ease') {
     const clock = document.querySelector(`.clock--${id}`)
     clock.style.setProperty(`--small-hand`, `${h}deg`)
     clock.style.setProperty(`--large-hand`, `${m}deg`)
     clock.style.setProperty(`--animation-time`, `${sec}s`)
+    clock.style.setProperty(`--animation-time-small`, `${sec}s`)
+    clock.style.setProperty(`--animation-time-large`, `${secM}s`)
+    clock.style.setProperty(`--timing`, timing)
   }
 
   // Calculates the difference angle in counter clockwise direction
@@ -1306,8 +1350,25 @@
 
   // Sets stop position
   function setStop() {
-    for (let i = 0; i < 4; i++)
-      setDigit(i, digit_stop, 6, 15 / Math.pow(speedMultiplier, 0.7))
+    // Force both states to the stop pose, dropping any drift from in-flight
+    // animations. curr is the logical CCW angle (270 = down), anim is the CSS
+    // CW rotation (matching stop angle 90), snapped to the nearest turn so the
+    // transition stays short.
+    const secs = 15 / Math.pow(speedMultiplier, 0.7)
+    const nearestStop = a => 90 + 360 * Math.round((a - 90) / 360)
+    for (let di = 0; di < 4; di++) {
+      for (let i = 0; i < 6; i++) {
+        current_state[di][i][0] = 270
+        current_state[di][i][1] = 270
+        anim_state[di][i][0] = nearestStop(anim_state[di][i][0])
+        anim_state[di][i][1] = nearestStop(anim_state[di][i][1])
+      }
+    }
+    for (let ci = 0; ci < 24; ci++) {
+      const di = Math.floor(ci / 6)
+      const i = ci % 6
+      setHands(ci, anim_state[di][i][0], anim_state[di][i][1], secs)
+    }
   }
 
   // Sets time with lazy animation
@@ -1328,19 +1389,369 @@
     for (let i = 0; i < 4; i++)
       setDigit(i, digit_II, 6, 8 / scaleFactor)
     for (let i = 0; i < 8; i++)
-      setTimeout(()=>{
+      animTimeout(()=>{
         setHalfDigit(i, digit_II, 1, 18 / scaleFactor)
       }, (7000 + 400 * (i + 1)) / scaleFactor)
 
     for (let i = 0; i < 4; i++)
-      setTimeout(()=>{
+      animTimeout(()=>{
         setDigit(i, digits[time.charAt(i)], 0, 15 / scaleFactor)
       }, (7000 + 9000 + 400 *(i*2 + 1)) / scaleFactor)
   }
 
+  // Sets time with propeller animation
+  // Hour hand spins CW, minute hand spins CCW, 2 extra rotations each
+  function setPropeller(time) {
+    const scaleFactor = Math.pow(speedMultiplier, 0.7)
+    const secs = 22 / scaleFactor
+    for (let hd = 0; hd < 8; hd++) {
+      const di = Math.floor(hd / 2)
+      const half = hd % 2
+      const values = digits[time.charAt(di)].slice(half * 3, half * 3 + 3)
+      for (let x = 0; x < 3; x++) {
+        const curr = current_state[di][x + half * 3]
+        const anim = anim_state[di][x + half * 3]
+        const d2 = calcAngleCCW(curr[0], values[x][0])
+        const d3 = calcAngleCW(curr[1], values[x][1])
+        curr[0] = (curr[0] - d2) % 360
+        if (curr[0] < 0) curr[0] += 360
+        anim[0] = anim[0] + d2 + 720
+        curr[1] = (curr[1] + d3) % 360
+        anim[1] = anim[1] - d3 - 720
+        setHands(hd * 3 + x, anim[0], anim[1], secs)
+      }
+    }
+  }
+
+  // Sets time with ripple animation
+  // Move to d_WAVE, then spin into the target staggered by distance from centre
+  function setRipple(time) {
+    const scaleFactor = Math.pow(speedMultiplier, 0.7)
+    const waveSecs  = 8  / scaleFactor
+    const holdMs    = 8000 / scaleFactor
+    const spinSecs  = 24 / scaleFactor
+
+    const dWaveA = [[70,255],[85,275],[105,290],[60,250],[85,275],[110,300]]
+    const dWaveB = [[45,245],[80,280],[115,315],[15,220],[60,300],[140,345]]
+    const dWaveAm = [[120,290],[95,265],[70,240],[110,285],[95,265],[75,250]]
+    const dWaveBm = [[165,320],[120,240],[40,195],[135,295],[100,260],[65,225]]
+    const waveDigits = [dWaveA, dWaveB, dWaveBm, dWaveAm]
+
+    for (let i = 0; i < 4; i++)
+      setDigit(i, waveDigits[i], 6, waveSecs)
+
+    for (let d = 0; d <= 4; d++) {
+      for (let hd = 0; hd < 8; hd++) {
+        const di   = Math.floor(hd / 2)
+        const half = hd % 2
+        const values = digits[time.charAt(di)].slice(half * 3, half * 3 + 3)
+        for (let p = 0; p < 3; p++) {
+          const dist = Math.floor(Math.abs(hd - 3.5) + Math.abs(p - 1.0))
+          if (dist !== d) continue
+          const curr = current_state[di][p + half * 3]
+          const anim = anim_state[di][p + half * 3]
+          // Mirror rotation direction for the right half
+          let dh, dm
+          if (hd < 4) {
+            const d2 = calcAngleCCW(curr[0], values[p][0])
+            const d3 = calcAngleCW(curr[1],  values[p][1])
+            curr[0] = ((curr[0] - d2) % 360 + 360) % 360
+            curr[1] = (curr[1] + d3) % 360
+            dh = d2 + 720
+            dm = d3 + 720
+          } else {
+            const d2 = calcAngleCW(curr[0], values[p][0])
+            const d3 = calcAngleCCW(curr[1], values[p][1])
+            curr[0] = (curr[0] + d2) % 360
+            curr[1] = ((curr[1] - d3) % 360 + 360) % 360
+            dh = -(d2 + 720)
+            dm = -(d3 + 720)
+          }
+          const ci = hd * 3 + p
+          const delay = holdMs + d * 100
+          // Constant deg/sec per hand with linear timing -> matching speed and accel
+          const waveSpeed = (720 + 360) / spinSecs
+          const secH = Math.abs(dh) / waveSpeed
+          const secM = Math.abs(dm) / waveSpeed
+          animTimeout(() => {
+            anim[0] += dh
+            anim[1] -= dm
+            setHands(ci, anim[0], anim[1], secH, secM, 'linear')
+          }, delay)
+        }
+      }
+    }
+  }
+
+  // Sets time with arrow animation
+  // Move to d_joint, then spin into the target staggered along a diagonal wavefront
+  function setArrow(time) {
+    const scaleFactor = Math.pow(speedMultiplier, 0.7)
+    const jointSecs = 8  / scaleFactor
+    const holdMs    = 8000 / scaleFactor
+    const spinSecs  = 18 / scaleFactor
+
+    for (let i = 0; i < 4; i++)
+      setDigit(i, digit_joint, 6, jointSecs)
+
+    // Project each clock onto (2, -7) and stagger by rank along that axis
+    const projOf = (col, row) => 2 * col - 7 * row
+    const projSet = new Set()
+    for (let c = 0; c < 8; c++)
+      for (let r = 0; r < 3; r++)
+        projSet.add(projOf(c, r))
+    const projRank = new Map(
+      [...projSet].sort((a, b) => a - b).map((v, i) => [v, i]))
+
+    for (let hd = 0; hd < 8; hd++) {
+      const di   = Math.floor(hd / 2)
+      const half = hd % 2
+      const values = digits[time.charAt(di)].slice(half * 3, half * 3 + 3)
+      for (let p = 0; p < 3; p++) {
+        const curr = current_state[di][p + half * 3]
+        const anim = anim_state[di][p + half * 3]
+        // 1 extra full rotation per hand for legibility (firmware uses 2)
+        const d2 = calcAngleCCW(curr[0], values[p][0])
+        curr[0] = ((curr[0] - d2) % 360 + 360) % 360
+        const dh = d2 + 360
+        const d3 = calcAngleCW(curr[1], values[p][1])
+        curr[1] = (curr[1] + d3) % 360
+        const dm = d3 + 360
+        const ci = hd * 3 + p
+        const rank = projRank.get(projOf(hd, p))
+        const delay = holdMs + rank * 25
+        const arrowSpeed = (360 + 180) / spinSecs
+        const secH = dh / arrowSpeed
+        const secM = dm / arrowSpeed
+        animTimeout(() => {
+          anim[0] += dh
+          anim[1] -= dm
+          setHands(ci, anim[0], anim[1], secH, secM)
+        }, delay)
+      }
+    }
+  }
+
+  // Sets time with bubble animation
+  // Move to d_bubble, then spin into the target in a checkerboard pattern
+  function setBubble(time) {
+    const scaleFactor = Math.pow(speedMultiplier, 0.7)
+    const bubbleSecs = 8  / scaleFactor
+    const holdMs     = 8000 / scaleFactor
+    const spinSecs   = 20 / scaleFactor
+
+    for (let i = 0; i < 4; i++)
+      setDigit(i, digit_bubble, 6, bubbleSecs)
+
+    for (let hd = 0; hd < 8; hd++) {
+      const di   = Math.floor(hd / 2)
+      const half = hd % 2
+      const values = digits[time.charAt(di)].slice(half * 3, half * 3 + 3)
+      for (let p = 0; p < 3; p++) {
+        const curr = current_state[di][p + half * 3]
+        const anim = anim_state[di][p + half * 3]
+        // (col + row) parity picks spin direction, even columns inverted
+        let dh, dm
+        let hourCW = ((hd + p) % 2 === 0)
+        if (hd % 2 === 0) hourCW = !hourCW
+        if (hourCW) {
+          const d2 = calcAngleCCW(curr[0], values[p][0])
+          curr[0] = ((curr[0] - d2) % 360 + 360) % 360
+          dh = d2 + 360
+          const d3 = calcAngleCW(curr[1], values[p][1])
+          curr[1] = (curr[1] + d3) % 360
+          dm = d3 + 360
+        } else {
+          const d2 = calcAngleCW(curr[0], values[p][0])
+          curr[0] = (curr[0] + d2) % 360
+          dh = -(d2 + 360)
+          const d3 = calcAngleCCW(curr[1], values[p][1])
+          curr[1] = ((curr[1] - d3) % 360 + 360) % 360
+          dm = -(d3 + 360)
+        }
+        const ci = hd * 3 + p
+        const bubbleSpeed = (360 + 180) / spinSecs
+        const secH = Math.abs(dh) / bubbleSpeed
+        const secM = Math.abs(dm) / bubbleSpeed
+        animTimeout(() => {
+          anim[0] += dh
+          anim[1] -= dm
+          setHands(ci, anim[0], anim[1], secH, secM, 'linear')
+        }, holdMs)
+      }
+    }
+  }
+
+  // Sets time with gear animation
+  // Move to d_CENT, then spin into the target staggered outwards in a square radius
+  function setGear(time) {
+    const scaleFactor = Math.pow(speedMultiplier, 0.7)
+    const centSecs = 8  / scaleFactor
+    const holdMs   = 8000 / scaleFactor
+    const spinSecs = 20 / scaleFactor
+
+    const dCentA  = [[345,345],[0,0],[15,15],[330,330],[0,0],[30,30]]
+    const dCentB  = [[315,315],[0,0],[45,45],[300,300],[0,0],[60,60]]
+    const dCentAm = [[210,210],[180,180],[150,150],[195,195],[180,180],[165,165]]
+    const dCentBm = [[240,240],[180,180],[120,120],[225,225],[180,180],[135,135]]
+    const centDigits = [dCentA, dCentB, dCentBm, dCentAm]
+
+    for (let i = 0; i < 4; i++)
+      setDigit(i, centDigits[i], 6, centSecs)
+
+    for (let hd = 0; hd < 8; hd++) {
+      const di   = Math.floor(hd / 2)
+      const half = hd % 2
+      const values = digits[time.charAt(di)].slice(half * 3, half * 3 + 3)
+      for (let p = 0; p < 3; p++) {
+        const colDist = Math.min(Math.abs(hd - 3), Math.abs(hd - 4))
+        const rowDist = Math.abs(p - 1)
+        const group = Math.max(colDist, rowDist)
+        const curr = current_state[di][p + half * 3]
+        const anim = anim_state[di][p + half * 3]
+        // Both hands clockwise, 1 extra full rotation for legibility
+        const d2 = calcAngleCCW(curr[0], values[p][0])
+        const d3 = calcAngleCCW(curr[1], values[p][1])
+        curr[0] = ((curr[0] - d2) % 360 + 360) % 360
+        curr[1] = ((curr[1] - d3) % 360 + 360) % 360
+        const dh = d2 + 360
+        const dm = -(d3 + 360)
+        const ci = hd * 3 + p
+        const delay = holdMs + group * 100
+        const gearSpeed = (360 + 180) / spinSecs
+        const secH = Math.abs(dh) / gearSpeed
+        const secM = Math.abs(dm) / gearSpeed
+        animTimeout(() => {
+          anim[0] += dh
+          anim[1] -= dm
+          setHands(ci, anim[0], anim[1], secH, secM, 'linear')
+        }, delay)
+      }
+    }
+  }
+
   // Last time setted on clock
   let lastTime
-  
+
+  // Bumped on every dispatch (and on stop) so pending animTimeout callbacks
+  // from a previous animation bail out instead of overriding the new state
+  let animEpoch = 0
+
+  // setTimeout that skips its callback if the animation epoch has advanced
+  function animTimeout(fn, delay) {
+    const myEpoch = animEpoch
+    return setTimeout(() => {
+      if (myEpoch !== animEpoch) return
+      fn()
+    }, delay)
+  }
+
+  // Runs the animation for the given mode index
+  function dispatchAnimation(mode, time) {
+    animEpoch++
+    switch(mode) {
+      case 0:  setLazy(time);      break;
+      case 1:  setFun(time);       break;
+      case 2:  setWaves(time);     break;
+      case 3:  setPropeller(time); break;
+      case 4:  setArrow(time);     break;
+      case 5:  setRipple(time);    break;
+      case 6:  setBubble(time);    break;
+      case 7:  setGear(time);      break;
+      case 8:  setDiagonal(time);  break;
+      case 9:  setCascade(time);   break;
+      case 10: setCycle(time);     break;
+    }
+  }
+
+  // Sets time with diagonal animation
+  // Move to d_diagonal, then move each half-digit (left to right) into the
+  // target with CLOCKWISE2, both hands spinning together at constant speed
+  function setDiagonal(time) {
+    const scaleFactor = Math.pow(speedMultiplier, 0.7)
+    const diagSecs = 8  / scaleFactor
+    const holdMs   = 7000 / scaleFactor
+    const stepSecs = 16 / scaleFactor
+    const stepMs   = 300 / scaleFactor
+    const diagSpeed = (360 + 180) / stepSecs
+
+    for (let i = 0; i < 4; i++)
+      setDigit(i, digit_diag, 6, diagSecs)
+
+    for (let i = 0; i < 8; i++) {
+      const di   = Math.floor(i / 2)
+      const half = i % 2
+      const values = digits[time.charAt(di)].slice(half * 3, half * 3 + 3)
+      animTimeout(() => {
+        for (let p = 0; p < 3; p++) {
+          const curr = current_state[di][p + half * 3]
+          const anim = anim_state[di][p + half * 3]
+          const d2 = calcAngleCCW(curr[0], values[p][0])
+          const d4 = calcAngleCCW(curr[1], values[p][1])
+          curr[0] = ((curr[0] - d2) % 360 + 360) % 360
+          curr[1] = ((curr[1] - d4) % 360 + 360) % 360
+          const dh = d2 + 360
+          const dm = d4 + 360
+          anim[0] += dh
+          anim[1] += dm
+          const secH = dh / diagSpeed
+          const secM = dm / diagSpeed
+          setHands(i * 3 + p, anim[0], anim[1], secH, secM, 'linear')
+        }
+      }, holdMs + stepMs * i)
+    }
+  }
+
+  // Sets time with cascade animation
+  // Move to stop pose, then reveal column by column with both hands CCW, the
+  // minute hand spinning twice as far at twice the speed so they finish together
+  function setCascade(time) {
+    const scaleFactor = Math.pow(speedMultiplier, 0.7)
+    const phase1Secs = 8 / scaleFactor
+    const holdMs     = 7000 / scaleFactor
+    const colStepMs  = 400 / scaleFactor
+    const hourSpeed   = 45 * scaleFactor
+    const minuteSpeed = 90 * scaleFactor
+
+    for (let i = 0; i < 4; i++)
+      setDigit(i, digit_stop, 6, phase1Secs)
+
+    for (let hd = 0; hd < 8; hd++) {
+      const di   = Math.floor(hd / 2)
+      const half = hd % 2
+      const values = digits[time.charAt(di)].slice(half * 3, half * 3 + 3)
+      animTimeout(() => {
+        for (let p = 0; p < 3; p++) {
+          const curr = current_state[di][p + half * 3]
+          const anim = anim_state[di][p + half * 3]
+          const d1 = calcAngleCW(curr[0], values[p][0])
+          curr[0] = (curr[0] + d1) % 360
+          const dh = d1 + 360
+          const d3 = calcAngleCW(curr[1], values[p][1])
+          curr[1] = (curr[1] + d3) % 360
+          const dm = d3 + 720
+          anim[0] -= dh
+          anim[1] -= dm
+          const secH = dh / hourSpeed
+          const secM = dm / minuteSpeed
+          setHands(hd * 3 + p, anim[0], anim[1], secH, secM, 'linear')
+        }
+      }, holdMs + colStepMs * hd)
+    }
+  }
+
+  // Picks an animation from the current minute so the preview matches the firmware
+  const cycleOrder = [
+    'FUN', 'WAVES', 'ARROW', 'RIPPLE', 'BUBBLE', 'PROPELLER', 'DIAGONAL', 'GEAR', 'CASCADE'
+  ]
+  function setCycle(time) {
+    const hours = parseInt(time.substring(0, 2), 10)
+    const minutes = parseInt(time.substring(2, 4), 10)
+    const minutesToday = hours * 60 + minutes
+    const name = cycleOrder[minutesToday % cycleOrder.length]
+    dispatchAnimation(modes.indexOf(name), time)
+  }
+
   // Sets current time on clock
   function setTime() {
     const d = new Date();
@@ -1349,17 +1760,7 @@
     const hours = d.getHours()
     if (time !== lastTime && sleep[day][hours] === 0 && clockEnabled) {
       lastTime = time
-      switch(selectedMode) {
-        case 0:
-          setLazy(lastTime)
-          break;
-        case 1:
-          setFun(lastTime)
-          break;
-        case 2:
-          setWaves(lastTime)
-          break;
-      }
+      dispatchAnimation(selectedMode, lastTime)
     } else if (sleep[day][hours] === 1 || !clockEnabled) {
       setStop()
     }
@@ -1375,10 +1776,11 @@
     }
   }
 
-  // Clears interval and set the clock on stop position
+  // Clears interval and sets the clock on stop position
   function stopClock() {
     clearInterval(clockInterval)
     clockInterval = undefined
+    animEpoch++
     setTimeout(setStop, 100 / Math.pow(speedMultiplier, 0.7))
   }
 
