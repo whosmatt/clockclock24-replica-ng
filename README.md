@@ -11,6 +11,7 @@ This fork is a general overhaul with some new features:
 - [x] CI/CD for OTA updates
 - [x] Port to ESP32-C3 and ESP32-S3 (LOLIN ESP32-C3 MINI and LOLIN ESP32-S3 MINI can be used as pin-compatible replacements)
 - [x] RGB status LED using onboard addressable LED
+- [x] Lots of new animations thanks to help from @aslafsky
 
 ## LOLIN ESP32-C3 MINI NOT RECOMMENDED
 The RF design of the LOLIN ESP32-C3 MINI is quite bad. Having the board plugged in at the intended spacing reflects back enough power to cause WiFi to be completely unusable, never getting a connection. Raising it with extra spacers or wires helps, but WiFi always ends up lossy and unstable.  
@@ -130,10 +131,12 @@ On the web application an approximate copy of the clock is shown. The interface 
 
 #### ON/OFF and Mode
 
-Animation modes available (for now):
+Animation modes available:
 1. **Lazy**, moves only clock hands that need to be changed by traveling the minimum distance.
 2. **Fun**, moves all clocks in a clockwise direction.
 3. **Waves**, All clocks straighten out and then follow a staggered domino animation. Produces interesting patterns at high speed settings.
+4. **And more, see below**
+5. **Cycle**, cycles through all available animations
 
 #### Speed Multiplier
 The speed multiplier is a global setting that multiplies the speed and acceleration of all animations. It is uncapped, but values above 50-100 may cause the motors to miss steps and lose position. You can only make the clock faster and only integer values are accepted.
@@ -167,6 +170,7 @@ Since I don't want to receive a letter from Humans Since 1982’s lawyers, all d
 ---
 
 ## Final result
+Thanks to @aslafsky for creating these videos!
 <div align="center">
 
 | Animation type | Result |
