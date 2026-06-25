@@ -1,3 +1,7 @@
+
+
+
+
 # clockclock24-replica-ng
 This is the [Vallasc](https://github.com/Vallasc) personal implementation of the "ClockClock 24" by [Humans Since 1982](https://www.humanssince1982.com/), modified my [whosmatt](https://github.com/whosmatt).  
 Refer to the git history for a detailed list of changes.  
@@ -171,18 +175,22 @@ Since I don't want to receive a letter from Humans Since 1982’s lawyers, all d
 
 ## Final result
 Thanks to @aslafsky for creating these videos!
-<div align="center">
 
-| Animation type | Result |
-| - | - |
-| Fun | <video src="FUN_URL" width="400"></video> |
-| Waves | <video src="WAVES_URL" width="400"></video> |
-| Propeller | <video src="PROPELLER_URL" width="400"></video> |
-| Arrow | <video src="ARROW_URL" width="400"></video> |
-| Ripple | <video src="RIPPLE_URL" width="400"></video> |
-| Bubble | <video src="BUBBLE_URL" width="400"></video> |
-| Gear | <video src="GEAR_URL" width="400"></video> |
-| Diagonal | <video src="DIAGONAL_URL" width="400"></video> |
-| Cascade | <video src="CASCADE_URL" width="400"></video> |
+https://github.com/user-attachments/assets/a0adddb4-cc97-4975-91e1-369e0a93a70e
 
-</div>
+https://github.com/user-attachments/assets/1fd281ae-a027-4f81-a45f-f1b24d9018bf
+
+https://github.com/user-attachments/assets/172dfaa4-e6f5-4460-b4a3-166a2458cf61
+
+https://github.com/user-attachments/assets/2bcadd7e-47b9-4ee0-837c-695eeb6e0cf6
+
+https://github.com/user-attachments/assets/11d3fde9-fc8d-429c-b31d-f30983e6772b
+
+https://github.com/user-attachments/assets/39de26bb-3415-4484-811c-9af3655d68b0
+
+https://github.com/user-attachments/assets/f645a4ce-e44f-4546-855f-b5b4ed42a8c2
+
+https://github.com/user-attachments/assets/ffc0cd36-1883-4b9f-ab62-cd135783557c
+
+https://github.com/user-attachments/assets/3a3f6d5d-3214-4c06-8f88-fd1e8a5519db
+
