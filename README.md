@@ -171,8 +171,14 @@ Since I don't want to receive a letter from Humans Since 1982’s lawyers, all d
 
 | Animation type | Result |
 | - | - |
-| Lazy | ![sasdasd](/images/clock1.gif) |
-| Fun | ![sasdasd](/images/clock2.gif) |
-| Waves | ![sasdasd](/images/clock3.gif) |
+| Fun | <video src="FUN_URL" width="400"></video> |
+| Waves | <video src="WAVES_URL" width="400"></video> |
+| Propeller | <video src="PROPELLER_URL" width="400"></video> |
+| Arrow | <video src="ARROW_URL" width="400"></video> |
+| Ripple | <video src="RIPPLE_URL" width="400"></video> |
+| Bubble | <video src="BUBBLE_URL" width="400"></video> |
+| Gear | <video src="GEAR_URL" width="400"></video> |
+| Diagonal | <video src="DIAGONAL_URL" width="400"></video> |
+| Cascade | <video src="CASCADE_URL" width="400"></video> |
 
 </div>
