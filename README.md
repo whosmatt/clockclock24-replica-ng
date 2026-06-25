@@ -1,7 +1,3 @@
-
-
-
-
 # clockclock24-replica-ng
 This is the [Vallasc](https://github.com/Vallasc) personal implementation of the "ClockClock 24" by [Humans Since 1982](https://www.humanssince1982.com/), modified my [whosmatt](https://github.com/whosmatt).  
 Refer to the git history for a detailed list of changes.  
@@ -15,7 +11,7 @@ This fork is a general overhaul with some new features:
 - [x] CI/CD for OTA updates
 - [x] Port to ESP32-C3 and ESP32-S3 (LOLIN ESP32-C3 MINI and LOLIN ESP32-S3 MINI can be used as pin-compatible replacements)
 - [x] RGB status LED using onboard addressable LED
-- [x] Lots of new animations thanks to help from @aslafsky
+- [x] Lots of new animations thanks to help from [@aslafsky](https://github.com/aslafsky)
 
 ## LOLIN ESP32-C3 MINI NOT RECOMMENDED
 The RF design of the LOLIN ESP32-C3 MINI is quite bad. Having the board plugged in at the intended spacing reflects back enough power to cause WiFi to be completely unusable, never getting a connection. Raising it with extra spacers or wires helps, but WiFi always ends up lossy and unstable.  
@@ -174,7 +170,7 @@ Since I don't want to receive a letter from Humans Since 1982’s lawyers, all d
 ---
 
 ## Final result
-Thanks to @aslafsky for creating these videos!
+Thanks to [@aslafsky](https://github.com/aslafsky) for creating these videos!
 
 https://github.com/user-attachments/assets/a0adddb4-cc97-4975-91e1-369e0a93a70e
 
