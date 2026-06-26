@@ -108,6 +108,34 @@ void set_half_digit(int index, t_half_digitl half)
     _counter++;
 }
 
+// 0 <= index < 8
+void set_half_digit_full(int index, t_half_digit half)
+{
+    send_half_digit(index, half);
+    _last_state[index] = half;
+    _counter++;
+}
+
+// 0 <= hd < 8, 0 <= p < 3
+void set_single_clock_full(int hd, int p, t_half_digitl lite, int mode_h, int mode_m)
+{
+    t_half_digit tmp = _last_state[hd];
+    tmp.clocks[p].angle_h  = lite.clocks[p].angle_h;
+    tmp.clocks[p].angle_m  = lite.clocks[p].angle_m;
+    tmp.clocks[p].speed_h  = _speed;
+    tmp.clocks[p].speed_m  = _speed;
+    tmp.clocks[p].accel_h  = _acceleration;
+    tmp.clocks[p].accel_m  = _acceleration;
+    tmp.clocks[p].mode_h   = mode_h;
+    tmp.clocks[p].mode_m   = mode_m;
+    tmp.clocks[p].adjust_h = 0;
+    tmp.clocks[p].adjust_m = 0;
+    tmp.change_counter[p]  = _counter;
+    send_half_digit(hd, tmp);
+    _last_state[hd] = tmp;
+    _counter++;
+}
+
 void set_clock_time(int h, int m)
 {
   if(h < 0 || h > 99 || m < 0 || m > 99 )

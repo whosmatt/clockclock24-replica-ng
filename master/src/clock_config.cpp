@@ -31,6 +31,9 @@ void begin_config()
 {
   prefs.begin("clockclock24");
   _clock_mode = prefs.getInt("clock_mode", LAZY);
+  // Fall back to LAZY if a stored mode is out of range (e.g. a removed mode)
+  if (_clock_mode < LAZY || _clock_mode > CYCLE)
+    _clock_mode = LAZY;
   _clock_enabled = prefs.getBool("clock_enabled", true);
   _wireless_mode = prefs.getInt("wireless_mode", HOTSPOT);
   _active_wireless_mode = _wireless_mode;
@@ -185,7 +188,7 @@ void set_clock_mode_temp(int value)
 
 void set_clock_animation_mode(int value)
 {
-  if (value >= LAZY && value <= WAVES) {
+  if (value >= LAZY && value <= CYCLE) {
     _clock_mode = value;
     prefs.putInt("clock_mode", value);
   }
