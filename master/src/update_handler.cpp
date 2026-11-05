@@ -1,6 +1,7 @@
 #include "update_handler.h"
 #include "status_led.h"
 #include "board_definitions.h"
+#include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
