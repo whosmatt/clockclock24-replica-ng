@@ -127,6 +127,13 @@ void set_clock_time(int h, int m);
 */
 t_full_clock get_clock_state_from_time(int h, int m);
 
+/**
+ * Returns a full clock state with a single number, no leading 0's
+ * @param n     number (0-9999)
+ * @return full clock state
+*/
+t_full_clock get_clock_state_from_number(int n);
+
 /** 
  * @param clock_index   single clock index (0 <= index < 24)
  * @param h_amount      hours hand degree of adjustment

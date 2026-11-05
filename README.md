@@ -109,6 +109,10 @@ Whenever you visit the web app, time and time zone (including daylight saving ru
 The web app is available at http://clockclock24.local (uses your configured hostname) or http://192.168.1.10 (AP mode only). Your router may also assign a DNS entry for the clock using the hostname, such as http://clockclock24/ (or the respective FQDN).  
 In AP mode, a captive portal is active, and most devices should automatically send you to the web app.
 
+#### Show current IP address
+
+Press the boot button to display the current IPv4 address of the clock via the clock hands. Works when connected to an external network.
+
 ### Flashing (First installation or recovery)
 
 You can get the latest compiled binary for your board from the releases page and flash it directly via esptool or an ESP32 web flasher. You can also clone the project and compile/flash via PlatformIO.  
