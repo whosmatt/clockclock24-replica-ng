@@ -9,6 +9,7 @@
 #define I2C_SCL 10
 #define STATUS_LED_PIN 7
 #define STATUS_LED_TYPE (NEO_GRB + NEO_KHZ800)
+#define BOOT_BUTTON_PIN 9
 #define BOARD_TARGET "lolin_c3_mini"
 #elif defined(ARDUINO_LOLIN_S3_MINI)
 // LOLIN S3 Mini
@@ -16,6 +17,7 @@
 #define I2C_SCL 36
 #define STATUS_LED_PIN 47
 #define STATUS_LED_TYPE (NEO_RGB + NEO_KHZ800)
+#define BOOT_BUTTON_PIN 0
 #define BOARD_TARGET "lolin_s3_mini"
 #endif
 

@@ -154,6 +154,18 @@ t_full_clock get_clock_state_from_time(int h, int m)
   return clock_state;
 }
 
+t_full_clock get_clock_state_from_number(int n)
+{
+  t_full_clock clock_state = d_stop;
+  for (int i = 3; i >= 0; i--, n /= 10)
+  {
+    clock_state.digit[i] = _digits[n % 10];
+    if (n < 10)
+      break;
+  }
+  return clock_state;
+}
+
 void adjust_hands(int clock_index, int h_amount, int m_amount)
 {
   t_half_digit tmp = _last_state[clock_index/3];

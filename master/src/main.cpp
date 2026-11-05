@@ -103,6 +103,11 @@ void stop();
 void shutdown();
 
 /**
+ * Shows the clock's IPv4 address, one block at a time (blocking, ~32s)
+*/
+void show_ip();
+
+/**
  * Custom delay to update web clients
  * @param value   time in milliseconds
 */
@@ -112,6 +117,8 @@ void setup() {
   Serial.begin(115200);
   Serial.printf("\nclockclock24 replica by Vallasc - %s\n", BOARD_TARGET);
   delay(3000);
+
+  pinMode(BOOT_BUTTON_PIN, INPUT_PULLUP);
   
   // Initialize status LED
   led_init();
@@ -144,6 +151,9 @@ void setup() {
 }
 
 void loop() {
+  if (digitalRead(BOOT_BUTTON_PIN) == LOW)
+    show_ip();
+
   // Daily restart at configured hour
   if (!update_in_progress() && get_daily_restart_enabled())
   {
@@ -532,6 +542,23 @@ void shutdown()
     set_acceleration(100 * 100);
     set_clock(d_stop);
   }
+}
+
+void show_ip()
+{
+  IPAddress ip = get_active_connection_mode() == HOTSPOT ? WiFi.softAPIP() : WiFi.localIP();
+  set_direction(MIN_DISTANCE);
+  set_speed(1000);
+  set_acceleration(1000);
+  for (int i = 0; i < 4; i++)
+  {
+    set_clock(get_clock_state_from_number(ip[i]));
+    _delay(8000); // ~3s move + 5s
+  }
+  // Force redraw
+  last_hour = -1;
+  last_minute = -1;
+  is_stopped = false;
 }
 
 void _delay(int value)
