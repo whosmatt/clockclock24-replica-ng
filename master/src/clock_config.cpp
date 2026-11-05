@@ -7,7 +7,7 @@ Preferences prefs;
 int _clock_mode;
 bool _clock_enabled = true;
 bool _sleep_time[7 * 24];
-int _clock_timezone;
+char _clock_timezone[64];
 int _speed_multiplier = 1;
 
 int _wireless_mode;
@@ -37,7 +37,7 @@ void begin_config()
   _clock_enabled = prefs.getBool("clock_enabled", true);
   _wireless_mode = prefs.getInt("wireless_mode", HOTSPOT);
   _active_wireless_mode = _wireless_mode;
-  _clock_timezone = prefs.getInt("clock_timezone", 0);
+  set_timezone(prefs.getString("clock_tz", "UTC0").c_str());
   _speed_multiplier = prefs.getInt("speed_mult", 1);
   strncpy(_ssid, prefs.getString("ssid", "").c_str(), sizeof(_ssid));
   strncpy(_password, prefs.getString("password", "").c_str(), sizeof(_password));
@@ -111,7 +111,7 @@ int get_active_connection_mode()
   return _active_wireless_mode;
 }
 
-int get_timezone()
+const char *get_timezone()
 {
   return _clock_timezone;
 }
@@ -222,10 +222,13 @@ void set_active_connection_mode(int value)
   _active_wireless_mode = value;
 }
 
-void set_timezone(int value)
+void set_timezone(const char *value)
 {
-  _clock_timezone = value;
-  prefs.putInt("clock_timezone", value);
+  strlcpy(_clock_timezone, value, sizeof(_clock_timezone));
+  setenv("TZ", _clock_timezone, 1);
+  tzset();
+  if (prefs.getString("clock_tz") != _clock_timezone)
+    prefs.putString("clock_tz", _clock_timezone);
 }
 
 void set_ssid(const char *value)

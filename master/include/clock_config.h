@@ -81,9 +81,9 @@ int get_connection_mode();
 int get_active_connection_mode();
 
 /**
- * Gets current time zone based on UTC offset
+ * Gets current time zone as POSIX TZ string (e.g. "STD-1:00DST-2:00,M3.5.0/2:00,M10.5.0/3:00")
  */
-int get_timezone();
+const char *get_timezone();
 
 /**
  * Gets current SSID
@@ -181,10 +181,10 @@ void set_connection_mode(int value);
 void set_active_connection_mode(int value);
 
 /**
- *  Sets the time zone
- * @param value   time zone based on UTC offset
+ *  Sets, applies and saves the time zone
+ * @param value   POSIX TZ string including DST rules
  */
-void set_timezone(int value);
+void set_timezone(const char *value);
 
 /**
  *  Sets SSID value

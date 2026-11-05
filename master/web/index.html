@@ -597,17 +597,34 @@
 
   /* Server calls */
 
-  // Send current datetime to clock
+  // Browser time zone as POSIX TZ string incl. DST rules, e.g. "STD-1:00DST-2:00,M3.5.0/2:00,M10.5.0/3:00".
+  // Without Temporal support only the current UTC offset is used (no DST).
+  function posixTZ() {
+    const pad = n => String(n).padStart(2, "0")
+    // POSIX offsets are west-positive
+    const off = ns => { const m = ns / -6e10; return `${m < 0 ? "-" : ""}${Math.trunc(Math.abs(m) / 60)}:${pad(Math.abs(m) % 60)}` }
+    if (typeof Temporal === "undefined") return "STD" + off(new Date().getTimezoneOffset() * -6e10)
+
+    const now = Temporal.Now.zonedDateTimeISO()
+    const transitions = []
+    for (let z = now.with({ month: 1, day: 1 }).startOfDay(); (z = z.getTimeZoneTransition("next")) && z.year === now.year;)
+      transitions.push(z)
+    if (transitions.length !== 2) return "STD" + off(now.offsetNanoseconds)
+
+    // Rule as "<month>.<week (5 = last)>.<weekday>/<wall clock time before the switch>"
+    const rule = z => {
+      const w = z.withTimeZone(z.subtract({ nanoseconds: 1 }).offset)
+      return `M${w.month}.${w.day + 7 > w.daysInMonth ? 5 : Math.ceil(w.day / 7)}.${w.dayOfWeek % 7}/${w.hour}:${pad(w.minute)}`
+    }
+    const [toStd, toDst] = transitions.sort((a, b) => a.offsetNanoseconds - b.offsetNanoseconds)
+    return `STD${off(toStd.offsetNanoseconds)}DST${off(toDst.offsetNanoseconds)},${rule(toDst)},${rule(toStd)}`
+  }
+
+  // Send current time and time zone to clock
   function sendDate() {
-    const d = new Date()
     let formData = new FormData()
-    formData.append("h", d.getHours().toString())
-    formData.append("m", d.getMinutes().toString())
-    formData.append("s", d.getSeconds().toString())
-    formData.append("D", d.getDate().toString())
-    formData.append("M", (d.getMonth()+1).toString())
-    formData.append("Y", d.getFullYear().toString())
-    formData.append("timezone", (d.getTimezoneOffset() / -60).toString())
+    formData.append("epoch", Math.round(Date.now() / 1000).toString())
+    formData.append("tz", posixTZ())
     fetch("/time", {
       method: "post",
       body: formData,

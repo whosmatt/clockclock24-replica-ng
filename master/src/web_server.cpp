@@ -5,9 +5,6 @@
 
 WebServer _server(80);
 
-t_browser_time _browser_time = {0, 0, 0, 0, 0, 0};
-bool _time_changed_browser = false;
-
 // Forward declarations
 void handle_get_daily_restart();
 void handle_post_daily_restart();
@@ -133,27 +130,15 @@ void handle_get_system()
 void handle_post_time()
 {
   Serial.println("Handle POST /time");
-  if (_server.hasArg("h"))
-    _browser_time.hour = _server.arg("h").toInt();
-  if (_server.hasArg("m"))
-    _browser_time.minute = _server.arg("m").toInt();
-  if (_server.hasArg("s"))
-    _browser_time.second = _server.arg("s").toInt();
-  if (_server.hasArg("D"))
-    _browser_time.day = _server.arg("D").toInt();
-  if (_server.hasArg("M"))
-    _browser_time.month = _server.arg("M").toInt();
-  if (_server.hasArg("Y"))
-    _browser_time.year = _server.arg("Y").toInt();
-  if (_server.hasArg("timezone"))
+  if (_server.hasArg("tz"))
+    set_timezone(_server.arg("tz").c_str());
+  if (_server.hasArg("epoch") && get_active_connection_mode() == HOTSPOT)
   {
-    int _browser_timezone = _server.arg("timezone").toInt();
-    set_timezone(_browser_timezone);
+    timeval tv = { (time_t)atoll(_server.arg("epoch").c_str()), 0 };
+    settimeofday(&tv, nullptr);
   }
-  _time_changed_browser = true;
   _server.send(200, "text/plain", "");
-  Serial.printf("Time received: %d:%d:%d\n",
-                _browser_time.hour, _browser_time.minute, _browser_time.second);
+  Serial.printf("Time received, TZ: %s\n", get_timezone());
 }
 
 void handle_post_adjust()
@@ -298,16 +283,4 @@ void handle_post_daily_restart()
            get_daily_restart_enabled() ? "true" : "false",
            get_daily_restart_hour());
   _server.send(200, "application/json", payload);
-}
-
-bool is_time_changed_browser()
-{
-  bool tmp = _time_changed_browser;
-  _time_changed_browser = false;
-  return tmp;
-}
-
-t_browser_time get_browser_time()
-{
-  return _browser_time;
 }

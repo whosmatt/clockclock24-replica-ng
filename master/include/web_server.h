@@ -8,16 +8,6 @@
 #include "clock_manager.h"
 #include "clock_config.h"
 
-typedef struct browser_time
-{
-  int hour;
-  int minute;
-  int second;
-  int day;
-  int month;
-  int year;
-} t_browser_time;
-
 /**
  * Starts and configures the server
 */
@@ -87,17 +77,5 @@ void handle_post_mqtt();
  * Handles POST /restart
  */
 void handle_post_restart();
-
-/**
- * Check if the client changed the time
- * @return true if the client makes a request, false otherwise
-*/
-bool is_time_changed_browser();
-
-/**
- * Return the client's browser time
- * @return time
-*/
-t_browser_time get_browser_time();
 
 #endif
