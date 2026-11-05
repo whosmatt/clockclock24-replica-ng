@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include <TimeLib.h>
+#include <time.h>
 
 #include "board_definitions.h"
 #include "i2c.h"
@@ -10,7 +10,6 @@
 #include "wifi_utils.h"
 #include "web_server.h"
 #include "clock_config.h"
-#include "ntp.h"
 #include "status_led.h"
 #include "captive_portal.h"
 #include "mqtt_handler.h"
@@ -21,6 +20,11 @@ int last_minute = -1;
 bool is_stopped = false;
 const unsigned long SCHEDULED_RESTART_DELAY_MS = 3000;
 static int last_restart_day = -1;
+
+/**
+ * Gets the current local time
+*/
+tm local_time();
 
 /**
  * Sets clock to the current time
@@ -128,13 +132,10 @@ void setup() {
 
   if(get_active_connection_mode() == EXT_CONN)
   {
-    // Initialize NTP
-    begin_NTP();
-    setSyncProvider(get_NTP_time);
-    // Sync every 30 minutes
-    setSyncInterval(60 * 30);
-    
-    // Initialize MQTT (only in external connection mode)
+    configTzTime(get_timezone(), "pool.ntp.org");
+    tm t;
+    getLocalTime(&t);
+
     mqtt_init();
   }
 
@@ -146,12 +147,11 @@ void loop() {
   // Daily restart at configured hour
   if (!update_in_progress() && get_daily_restart_enabled())
   {
-    int current_hour = hour();
-    int current_day = day();
-    if (current_hour == get_daily_restart_hour() && current_day != last_restart_day)
+    tm t = local_time();
+    if (t.tm_hour == get_daily_restart_hour() && t.tm_mday != last_restart_day)
     {
-      last_restart_day = current_day;
-      Serial.printf("Daily restart at %d:00\n", current_hour);
+      last_restart_day = t.tm_mday;
+      Serial.printf("Daily restart at %d:00\n", t.tm_hour);
       schedule_restart(SCHEDULED_RESTART_DELAY_MS);
     }
   }
@@ -185,23 +185,6 @@ void loop() {
   if(get_active_connection_mode() == HOTSPOT)
     captive_portal_update();
 
-  if(get_active_connection_mode() == HOTSPOT && is_time_changed_browser())
-  {
-    t_browser_time browser_time = get_browser_time();
-    setTime(browser_time.hour, 
-      browser_time.minute, 
-      browser_time.second, 
-      browser_time.day, 
-      browser_time.month,  
-      browser_time.year);
-  }
-
-  if(get_active_connection_mode() == EXT_CONN && get_timezone() != get_ntp_timezone())
-  {
-    set_ntp_timezone(get_timezone());
-    setSyncProvider(get_NTP_time);
-  }
-
   get_clock_mode() != OFF ? set_time() : stop();
 
   handle_webclient();
@@ -211,16 +194,25 @@ void loop() {
     mqtt_handle();
 }
 
+tm local_time()
+{
+  time_t now = time(nullptr);
+  tm t;
+  localtime_r(&now, &t);
+  return t;
+}
+
 void set_time()
 {
-  int day_week = (weekday() + 5) % 7;
-  if(get_sleep_time(day_week, hour()))
+  tm t = local_time();
+  int day_week = (t.tm_wday + 6) % 7;
+  if(get_sleep_time(day_week, t.tm_hour))
     stop();
-  else if(hour() != last_hour || minute() != last_minute)
+  else if(t.tm_hour != last_hour || t.tm_min != last_minute)
   {
     is_stopped = false;
-    last_hour = hour();
-    last_minute = minute();
+    last_hour = t.tm_hour;
+    last_minute = t.tm_min;
     dispatch_animation(get_clock_mode());
   }
 }

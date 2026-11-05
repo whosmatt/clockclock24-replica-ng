@@ -105,7 +105,7 @@ The code is multicore, one core gets bytes from the I2C bus and saves them in th
 The master code runs on an ESP32, it serves the web application and sends the target hand positions with speed acceleration and movement strategy to the slave boards.
 
 When powered on, it tries to connect to the configured WiFi network, with fallback to AP mode.  
-Whenever you visit the web app, time and time zone are synchronized from your browser. Otherwise, NTP is used to continuously keep time.  
+Whenever you visit the web app, time and time zone (including daylight saving rules) are synchronized from your browser. Afterwards, NTP is used to continuously keep time. As of 11/2026 Safari does not support this yet and will need a UI visit to synchronize after DST changes.
 The web app is available at http://clockclock24.local (uses your configured hostname) or http://192.168.1.10 (AP mode only). Your router may also assign a DNS entry for the clock using the hostname, such as http://clockclock24/ (or the respective FQDN).  
 In AP mode, a captive portal is active, and most devices should automatically send you to the web app.
 
